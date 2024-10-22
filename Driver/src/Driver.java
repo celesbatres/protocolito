@@ -98,4 +98,87 @@ public class Driver {
     public static void receiveMessageFromUART() {
 
     }
+
+    // Cuando se desee recibir del VD, entonces se abre un udp server que recibe el mensaje, este mensaje se mandará por UART
+
+    // -- 
+
+    // Otro caso: Cuando se desea mandar al VD lo que se recibió del UART: -- Se abre el cliente y se manda por medio del cliente un request para que se le mande un response:
+    // Lo del response se manda al VD
+
+    // Mientras no existan cambios en los logs se sigue mandando el mismo: Siempre se manda el mismo response cuando se envia por medio del VD, 
+
+    // 
+
+    // UDP SERVER
+    private volatile boolean isRunning = true;  // Controla cuándo el servidor está en ejecución
+
+    // Método para activar el servidor UDP y recibir el mensaje del cliente
+    public String startUdpServer() {
+        String receivedMessage = null;
+        try (DatagramSocket socket = new DatagramSocket(9876)) {
+            byte[] receiveData = new byte[1024];
+            System.out.println("Servidor UDP activado, esperando paquetes...");
+
+            while (isRunning) {  // El servidor se ejecuta mientras isRunning sea true
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                socket.receive(receivePacket);  // Espera el paquete del cliente
+
+                // Obtener el mensaje del cliente
+                receivedMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
+                System.out.println("Mensaje recibido: " + receivedMessage);
+
+                // Responder al cliente
+                InetAddress clientAddress = receivePacket.getAddress();
+                int clientPort = receivePacket.getPort();
+                String response = "Respuesta del servidor";
+                byte[] sendData = response.getBytes();
+
+                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
+                socket.send(sendPacket);
+
+                // Opcional: Puedes salir del bucle después de recibir un mensaje
+                break;  // Si deseas que el servidor cierre después de un solo mensaje, usa esta línea
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return receivedMessage;  // Retorna el mensaje recibido
+    }
+
+    // Método para usar el servidor UDP solo cuando sea necesario
+    public String useUdpServer(boolean activar) {
+        if (activar) {
+            System.out.println("Iniciando servidor UDP...");
+            return startUdpServer();  // Inicia el servidor UDP y retorna el mensaje recibido
+        } else {
+            System.out.println("Servidor UDP no está activo.");
+            return null;
+        }
+    }
+
+    // Método para detener el servidor UDP
+    public void stopUdpServer() {
+        isRunning = false;  // Cambia el estado para detener el servidor
+        System.out.println("Servidor UDP apagado.");
+    }
+
+
+/*
+    public static void main(String[] args) throws InterruptedException {
+        Driver driver = new Driver();
+
+        // Ejecutar el servidor UDP en un hilo separado para poder detenerlo más tarde
+        Thread serverThread = new Thread(() -> {
+            String mensaje = driver.useUdpServer(true);  // Activa el servidor UDP y captura el mensaje recibido
+            System.out.println("Mensaje procesado: " + mensaje);
+        });
+
+        serverThread.start();
+
+        // Simulación de que el servidor corre por un tiempo, luego se apaga
+        Thread.sleep(10000);  // Mantén el servidor activo durante 10 segundos (ajusta el tiempo según tu necesidad)
+        driver.stopUdpServer();  // Apaga el servidor UDP
+        serverThread.join();  // Espera que el hilo termine
+    }*/
 }
