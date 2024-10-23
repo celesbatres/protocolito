@@ -11,6 +11,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 
 public class Server {
 
@@ -47,6 +48,7 @@ public class Server {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            ArrayList<String> messages = new ArrayList<>();
             // Agregar encabezados CORS
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -72,15 +74,20 @@ public class Server {
                 // Respuesta
                 String response = body.toString();
                 // Generar respuesta de 24 caracteres hexadecimales
-                StringBuilder hexResponse = new StringBuilder();
+                /*StringBuilder hexResponse = new StringBuilder();
                 for (int i = 0; i < 24; i++) {
                     hexResponse.append(Integer.toHexString((int) (Math.random() * 16)));
                 }
 
                 response = hexResponse.toString();
-                response = "FFF000000000000000042804";
+                messages.add(response);*/
+                VirtualDevice vd = new VirtualDevice(response);
+                System.out.println("PickColor: "+vd.getPickColor());
+                String response2 = getMessage(response.substring(24));
+                System.out.println(response2);
+                response = "FFF000000000000000000000737769746368305F6C6564313D31";
                 // Envio al Driver
-                sendToDriver(response);
+                // sendToDriver(response);
                 exchange.sendResponseHeaders(200, response.length());
                 OutputStream os = exchange.getResponseBody();
                 os.write(response.getBytes());
@@ -93,5 +100,15 @@ public class Server {
                 os.close();
             }
         }
+    }
+
+    public static String getMessage(String message){
+        StringBuilder textoConvertido = new StringBuilder();
+        for (int i = 0; i < message.length(); i += 2) {
+            String hex = message.substring(i, i + 2);
+            int decimal = Integer.parseInt(hex, 16);
+            textoConvertido.append((char) decimal);
+        }
+        return textoConvertido.toString();
     }
 }

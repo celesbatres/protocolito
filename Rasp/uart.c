@@ -5,7 +5,7 @@
 
 // Configuración UART
 #define UART_ID uart0
-#define BAUD_RATE 9600//115200
+#define BAUD_RATE 115200
 #define UART_TX_PIN 0
 #define UART_RX_PIN 1
 #define MAX_BUFFER_SIZE 100  
@@ -18,7 +18,6 @@ void uart_read_string(uart_inst_t *uart, char *buffer, size_t max_len) {
         if (uart_is_readable(uart)) {
             recv_char = uart_getc(uart);
 
-            // printf("%c", recv_char); 
             if (recv_char == '\n') {
                 break;
             } 
@@ -43,12 +42,17 @@ int main() {
     char buffer[MAX_BUFFER_SIZE];
 
     while (true) {
-        memset(buffer, 0, sizeof(buffer));
-
+        // Recepción
+        memset(buffer, 0, sizeof(buffer)); 
         uart_read_string(UART_ID, buffer, MAX_BUFFER_SIZE);
-
         printf("\nMensaje que recibió UART: %s\n", buffer);
+
+        // Envío
+        const char *mensaje_enviar = "Mensaje enviado desde Pico\n";
+        uart_puts(UART_ID, mensaje_enviar);
+        printf("Mensaje enviado por UART: %s\n", mensaje_enviar);
     }
 
     return 0;
 }
+
