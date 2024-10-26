@@ -19,7 +19,11 @@ void master_init () {
 }
 
 void master_propagate (struct frame *f) {
-  for (uint8_t i = 0; i < sizeof *f; i ++) {
-    spi_write_blocking (spi1, ((uint8_t *)f + i), CHUNK_SIZE);
-  }
+  spi_write_blocking (spi1, &f->to, 1);
+  spi_write_blocking (spi1, &f->from, 1);
+  spi_write_blocking (spi1, &f->length, 1);
+  spi_write_blocking (spi1, &f->header_checksum, 1);
+
+  // 2. escribir la data
+  spi_write_blocking (spi1, f->data, f->length);
 }

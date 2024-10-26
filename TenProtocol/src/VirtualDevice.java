@@ -1,3 +1,5 @@
+package App;
+
 public class VirtualDevice {
     private String vd; // All
     private String message;

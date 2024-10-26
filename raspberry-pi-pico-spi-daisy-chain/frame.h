@@ -9,11 +9,12 @@
 /* frame definitions */
 enum frame_type { message, ACK };
 struct frame {
-  uint8_t id;                 // id of the sent frame.
-  enum frame_type type;
+  uint8_t length; 
+  uint8_t header_checksum;    
   uint8_t to;                 // assigned in class
   uint8_t from;               // assigned in class
-  char data[99];              // actual data
+  char *data;              // actual data   
+
 };
 
 #endif // !FRAME_H

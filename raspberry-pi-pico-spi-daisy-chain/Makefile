@@ -3,7 +3,7 @@ BUILD_DIR = build
 
 # Set Pico SDK path
 PICO_SDK_PATH = /Users/alssdev/pico/pico-sdk
-PICO_BOARD=pico_w
+PICO_BOARD=pico
 
 # Create build directory and run CMake
 all: $(BUILD_DIR)

@@ -2,6 +2,7 @@
 
 #include "slave.h"
 #include "frame.h"
+#include "master.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +12,9 @@
 #include "pico/sem.h"
 #include "pico/stdlib.h"
 #include "pico/sem.h"
+#include <string.h>
 
+#define UART_ID uart0
 //=================================================================================//
 
 semaphore_t receive_sema;     // syncronization
@@ -20,27 +23,37 @@ struct list receive_list;
 //=================================================================================//
 
 void spiReceiveISR () {
-  // create a new frame
-  struct frame *f = malloc (sizeof *f);
+  // 1. Crear buffers
+  uint8_t header[4];
+  uint8_t *data;
 
-  // only one byte is read at a time
-  uint8_t in_buf[1];
+  // 2. leer los bytes del header
+  spi_read_blocking (spi0, 0, header, 4);
 
-  // read byte using SPI
-  spi_read_blocking (spi0, 0, (uint8_t *)f, sizeof *f);
+  // 3. validar el checksum (ver sección anterior)
+  // ...
 
-  if (sem_try_acquire (&receive_sema)) {
-    // add it to receive_list;
-    struct receive_elem *elem = malloc (sizeof *elem);
-    elem->f = f;
-    list_push_back (&receive_list, &elem->elem);
-    printf ("{ from: %d, data: %s }\n", f->from, f->data);
-    sem_release (&receive_sema);
+  // 4. crear frame
+  struct frame *f = malloc(sizeof *f);
+  f->to = header[0];
+  f->from = header[1];
+  f->length = header[2];
+  f->header_checksum = header[3];
 
-  } else {
-    // TODO
-  }
-  // }
+  // 5. leer data
+  f->data = malloc(f->length);
+  spi_read_blocking (spi0, 0, f->data, f->length);
+
+    
+      if(f->to == 0x06) {
+        uart_puts(UART_ID, f->data);
+      } else {
+        master_propagate(f);
+      }
+    
+    
+  free(f->data);
+  free(f);
 }
 
 //=================================================================================//
