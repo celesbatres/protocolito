@@ -43,7 +43,9 @@ public class App {
         }
     }
 
-
+    public static VirtualDevice buildVD(TenProtocol tp){
+        // Convierte un paquete  de TenProtocol en un VD
+    }
 
     static class PostHandler implements HttpHandler {
 
@@ -93,8 +95,8 @@ public class App {
 
                 
 
-                // VirtualDevice vd = new VirtualDevice(response);
-                // System.out.println("PickColor: "+vd.getPickColor());
+                VirtualDevice vd = new VirtualDevice(response);
+                System.out.println("PickColor: "+vd.getPickColor());
                 String response2 = getMessage(response.substring(24));
                 // String response2 = "FFF000000000000000000000737769746368305F6C6564313D31";
                 // System.out.println(response2);
@@ -133,9 +135,6 @@ public class App {
         }
         return textoConvertido.toString();
     }
-    public void sendMessageToDriver(String message){
-        // Abre un cliente udp y manda un mensaje al puerto del driver
-    }  
 }
 
 class udpClient implements Runnable{

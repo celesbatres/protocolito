@@ -1,11 +1,9 @@
-package App;
-
 public class VirtualDevice {
     private String vd; // All
     private String message;
     private String control;
     private String speed;
-    private String space;
+    private String space = " ";
     private String slider0;
     private String slider1;
     private String slider2;
@@ -107,11 +105,31 @@ public class VirtualDevice {
         this.message = textoConvertido.toString();
         this.control = vd.substring(0, 2);
         this.speed = vd.substring(2, 3);
-        this.space = vd.substring(3, 4);
         this.slider0 = vd.substring(4,6);
         this.slider1 = vd.substring(6, 8);
         this.slider2 = vd.substring(8, 10);
         this.ledRgb = vd.substring(11, 17);
         this.pickColor = vd.substring(18, 24);
+    }
+
+    public VirtualDevice(String control, String speed, String slider0, String slider1, String slider2, String ledRgb, String pickColor, String message){
+        this.control = control;
+        this.speed = speed;
+        this.slider0 = slider0;
+        this.slider1 = slider1;
+        this.slider2 = slider2;
+        this.ledRgb = ledRgb;
+        this.pickColor = pickColor;
+        this.message = message;
+    }
+
+    // Devuelve el VD completo en dependencia de los atributos
+    public String buildVD(){
+        String vd = this.control + this.speed + this.space + this.slider0 + this.slider1 + this.slider2 + this.space + this.ledRgb + this.space + this.pickColor + this.message;
+        return vd;
+    }
+
+    public boolean equals(VirtualDevice vd){
+        return this.vd.equals(vd.vd);
     }
 }
