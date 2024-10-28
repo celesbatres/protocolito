@@ -20,7 +20,7 @@
 
 int main (void) {
   // Enable UART
-  stdio_init_all ();
+  //stdio_init_all ();
 
   slave_init ();
   master_init ();
@@ -47,16 +47,23 @@ int main (void) {
   char data[99] = {0};
   int buffer_index=0;
 
+  // Set up our UART with the required speed.
+  uart_init(UART_ID, BAUD_RATE);
+
+  // Set the TX and RX pins by using the function select on the GPIO
+  // Set datasheet for more information on function select
+  gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
+  gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
+
   while (1) {
     //struct receive_elem *elem = NULL;
     char c = uart_getc(UART_ID);
-
-        if (c == '\n')
+      uart_putc(UART_ID, c);
+        if (c == '\n' || c == '\r')
         {
             data[buffer_index] = '\0';
             buffer_index = 0;
-            printf("Recibí del Driver: %s", data);
-            // create_frame(data);
+            create_frame(data);
         }
         else
         {
@@ -69,12 +76,13 @@ int main (void) {
 
 void create_frame(char data[]){
     struct frame *f = malloc(sizeof *f);
-    f->to = 0x01;
-    f->from = 0x06;
+    f->to = 0xAA;
+    f->from = 0x01;
     f->length = strlen(data) + 1;
     f->header_checksum = ((f->to + f->from + f->length) ^ 0xFF) + 0x1;    // checksum is ALWAYS calculated the same
 
     f->data = malloc(f->length);
+    uart_puts(UART_ID, "prueba");
     memcpy(f->data, data, f->length);
 
     /*char send_data[200];
