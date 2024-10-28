@@ -82,9 +82,8 @@ public class Driver {
             while (true) {
                 String mensaje_recibido = recibirMensajeUART();
                 if (mensaje_recibido != null && !mensaje_recibido.isEmpty()) {
-                    System.out.println("Mensaje enviado a driver " + mensaje_recibido);
-
                     enviarUDP(udpSocket, mensaje_recibido, appAddress);
+                    System.out.println("Mensaje enviado de física a driver " + message);
                 }
             }
         } catch (Exception e) {
@@ -115,7 +114,6 @@ public class Driver {
             byte[] udpBuffer = message.getBytes();
             DatagramPacket udpPacket = new DatagramPacket(udpBuffer, udpBuffer.length, address, 8001);
             udpSocket.send(udpPacket);
-            System.out.println("Driver -> App: Mensaje enviado a la aplicación.");
         } catch (IOException e) {
             System.err.println("Error al enviar mensaje UDP: " + e.getMessage());
         }
@@ -125,7 +123,7 @@ public class Driver {
         String datos_enviar = message + "\n";
         if (puertoUtilizar.isOpen()) {
             puertoUtilizar.writeBytes(datos_enviar.getBytes(), datos_enviar.length());
-            System.out.println("Se envio de Driver a física");
+            System.out.println("Se envio de Driver a física: " + datos_enviar);
         }else{
             System.err.println("Puerto no abierto");
         }
