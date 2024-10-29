@@ -32,7 +32,7 @@ public class Driver {
     }
 
     public static void abrirPuerto() {
-        puertoUtilizar = SerialPort.getCommPort("COM6");
+        puertoUtilizar = SerialPort.getCommPort("COM5");
         puertoUtilizar.setComPortParameters(115200, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
         puertoUtilizar.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING, 0, 0);
 
@@ -83,7 +83,7 @@ public class Driver {
                 String mensaje_recibido = recibirMensajeUART();
                 if (mensaje_recibido != null && !mensaje_recibido.isEmpty()) {
                     enviarUDP(udpSocket, mensaje_recibido, appAddress);
-                    System.out.println("Mensaje enviado de física a driver " + message);
+                    System.out.println("Mensaje enviado de física a driver " + mensaje_recibido);
                 }
             }
         } catch (Exception e) {

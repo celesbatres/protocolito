@@ -1,6 +1,7 @@
 {
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
-        "Driver/lib/jSerialComm-1.3.11.jar"
+        "Driver/lib/jSerialComm-1.3.11.jar",
+        "TenProtocol/lib/jSerialComm-1.3.11.jar"
     ]
 }
