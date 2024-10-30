@@ -1,4 +1,6 @@
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TenProtocol {
     ArrayList<Command> commands = new ArrayList<>();
@@ -13,6 +15,8 @@ public class TenProtocol {
         this.commandsString = new ArrayList<>();
     }
 
+
+    // Build the packet to send to the driver
     public String buildPacket(){
         // Packet = header + "-" + data //ip:vd
         // return header + "-" + data;
@@ -24,6 +28,46 @@ public class TenProtocol {
 
     public boolean hasCommands(){
         return commandsString.size() > 0;
+    }
+
+    public TenProtocol(String protocol, String data){
+        // Armar un arraylist de comandos en formato string dependiendo del protocolo(por cada grupo) > 
+        // Mejor en Command
+        // Definir separator de comandos
+           
+        this.header = protocol;
+        this.data = data;
+        if(protocol.equals("A")){
+            // Separar los comandos por espacios
+            String[] commands = data.split(" ");
+            for(String command : commands){
+                String[] commandParts = command.split(":");
+                String component = commandParts[0];
+                String value = commandParts[1];
+                Command command = new Command(value);
+                this.commandsString.add(command.toString());
+            }
+        }
+        // Command command = new Command(protocol, data);
+    }
+
+    public static void interpretTenProtocol(String packet){
+        String input = packet; // "241:1 lred:1 lcd:1 msg:’Hola Grupo F1’";
+        ArrayList<String> tokens = new ArrayList<>();
+
+        Pattern pattern = Pattern.compile("msg:’.*?’|\\S+");
+        Matcher matcher = pattern.matcher(input);
+
+        while (matcher.find()) {
+            tokens.add(matcher.group());
+        }
+
+        for (String token : tokens) {
+            System.out.println(token);
+            String component = token.split(":")[0];
+            String value = token.split(":")[1];
+            //Traducción de Protocolo
+        }
     }
 
 

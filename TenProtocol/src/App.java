@@ -15,9 +15,9 @@ import java.util.*;
 public class App {
 
     public static void main(String[] args) throws IOException {
-        Driver dr = new Driver();
-        String driverInfo = dr.toString();
-        System.out.println(driverInfo);
+        // Driver dr = new Driver();
+        // String driverInfo = dr.toString();
+        // System.out.println(driverInfo);
         // Crea el servidor en el puerto 8000
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
         server.createContext("/post", new PostHandler());
@@ -61,12 +61,6 @@ public class App {
         }
     }
 
-    /*
-     * public static VirtualDevice buildVD(TenProtocol tp){
-     * // Convierte un paquete de TenProtocol en un VD
-     * }
-     */
-
     static class PostHandler implements HttpHandler {
         // LinkedList<String> vds = new LinkedList<>(); // Lista de componentes
         // vds.add("FFF000000000000000000000737769746368305F6C6564313D31");
@@ -97,6 +91,7 @@ public class App {
                 put("slider2", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
                 put("lrgb_color", "^([A-Fa-f0-9]{6})$");
                 put("pick_color", "^([A-Fa-f0-9]{6})$");
+                put("msg", "^[A-Za-z0-9_]+$");
             }
         };
         // Hashmap de comandos con su value y su regex
@@ -203,6 +198,16 @@ public class App {
                         // Changes in elements
                         VirtualDevice newVD = new VirtualDevice(message);
 
+                        // Comparar hashmap de VD actual con el nuevo VD
+                        HashMap<String, Component> newVDMap = newVD.getComponentsMap();
+                        HashMap<String, Component> currentVDMap = vdState.getComponentsMap();
+                        // recorrer el nuevo VD y comparar con el actual
+                        for(Map.Entry<String, Component> entry : newVDMap.entrySet()){
+                            String key = entry.getKey();
+                            Component newComponent = entry.getValue();
+                            Component currentComponent = currentVDMap.get(key);
+                        }
+
                         // HashMap<String, String> newVDMap = newVD.get();
                         // Armar nuevo VD - solo para comparar cambios en elementos, tomando funciones y roles de VD actual
                         // Recorrer VD actual
@@ -306,10 +311,11 @@ public class App {
                 // System.out.println("Mensaje recibidosdss");
                 // //sendToDriver(response2);
                 // }
+                response = "FEF000000000000000000000";
                 exchange.sendResponseHeaders(200, response.length());
                 OutputStream os = exchange.getResponseBody();
                 os.write(response.getBytes());
-                // os.close();
+                os.close();
             } else {
                 String response = "Método no permitido";
                 exchange.sendResponseHeaders(405, response.length());
@@ -319,11 +325,6 @@ public class App {
             }
         }
     }
-
-    // public static VirtualDevice buildVirtualDevice(String postReq){
-    // VirtualDevice vd = new VirtualDevice(postReq);
-    // //
-    // }
 
     public static String getMessage(String message) {
         StringBuilder textoConvertido = new StringBuilder();
@@ -360,29 +361,5 @@ public class App {
         }
 
         return true;
-    }
-}
-
-class udpClient implements Runnable {
-    private String packet;
-
-    public udpClient(String packet) {
-        this.packet = packet;
-    }
-
-    @Override
-    public void run() {
-        try {
-            int port = 9091;
-            DatagramSocket ds = new DatagramSocket();
-            InetAddress ip = InetAddress.getLocalHost();
-            byte buffer[] = null;
-            buffer = this.packet.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ip, port);
-            ds.send(packet);
-            ds.close();
-        } catch (Exception e) {
-            System.out.println("Alerta! Errores encontrados durante ejecución");
-        }
     }
 }

@@ -1,25 +1,27 @@
 import java.util.*;
 
 public class VirtualDevice {
-    public static final String protocol = "A"; //TenProtocol
     private HashMap<String, Component> componentsMap;
-    // private ArrayList<Command> command s; // if - commands is empty (Los que existen en el )
-
-    // private String protocolFrom = ""; // Si protocolTo == protocol: Significa que es un VD de recepcion y decide si enviarlo a driver o responder a VD -> Desde APP
-    // private String protocolTo = "";
-    private String action = ""; // cmd, msg
     private String vd; // VD completo
     private String message; // Ultimos bits después de 24 en formato de texto
-    // private String 
-    
-
-    // vd.setInfo() -> En dependencia del mensaje, despues del bit 24 - editamos
-
-    //Para cambiar 
 
     public VirtualDevice(String vd) {
+        String control = vd.substring(0, 2);
+        String controlToBinary = Integer.toBinaryString(Integer.parseInt(control, 16));
+        // Asegurar que controlToBinary tenga 8 bits
+        while (controlToBinary.length() < 8) {
+            controlToBinary = "0" + controlToBinary;
+        }
         this.componentsMap = new HashMap<>();
-        this.componentsMap.put("control", new Component(vd.substring(0, 2)));
+        this.componentsMap.put("lcd", new Component(controlToBinary.substring(0, 1)));
+        this.componentsMap.put("switch0", new Component(controlToBinary.substring(1, 2)));
+        this.componentsMap.put("switch1", new Component(controlToBinary.substring(2, 3)));
+        this.componentsMap.put("fan", new Component(controlToBinary.substring(3, 4)));
+        this.componentsMap.put("lrgb", new Component(controlToBinary.substring(4, 5)));
+        this.componentsMap.put("lred", new Component(controlToBinary.substring(5, 6)));
+        this.componentsMap.put("lgreen", new Component(controlToBinary.substring(6, 7)));
+        this.componentsMap.put("heat", new Component(controlToBinary.substring(7, 8)));
+        // this.componentsMap.put("control", new Component(vd.substring(0, 2)));
         this.componentsMap.put("speed", new Component(vd.substring(2, 3)));
         this.componentsMap.put("space", new Component(vd.substring(3, 4)));
         this.componentsMap.put("slider0", new Component(vd.substring(4,6)));
@@ -29,18 +31,6 @@ public class VirtualDevice {
         this.componentsMap.put("ledRgb", new Component(vd.substring(11, 17)));
         this.componentsMap.put("space", new Component(vd.substring(17, 18)));
         this.componentsMap.put("pickColor", new Component(vd.substring(18, 24)));
-
-        // this.components = new ArrayList<>();
-        // this.components.add(new Component("control", vd.substring(0, 2)));
-        // this.components.add(new Component("speed", vd.substring(2, 3)));
-        // this.components.add(new Component("space", vd.substring(3, 4)));
-        // this.components.add(new Component("slider0", vd.substring(4,6)));
-        // this.components.add(new Component("slider1", vd.substring(6, 8)));
-        // this.components.add(new Component("slider2", vd.substring(8, 10)));
-        // this.components.add(new Component("space", vd.substring(10, 11)));
-        // this.components.add(new Component("ledRgb", vd.substring(11, 17)));
-        // this.components.add(new Component("space", vd.substring(17, 18)));
-        // this.components.add(new Component("pickColor", vd.substring(18, 24)));
 
         this.vd = vd;
         String msg = vd.substring(24);
@@ -52,68 +42,125 @@ public class VirtualDevice {
             textoConvertido.append((char) decimal);
         }
         this.message = textoConvertido.toString();
-        // String[] params = this.message.split(" ");
-        // this.action = params[0];
-        // this.protocolTo = params[1];    
     }
 
-    //- Se almacenan y cuando se mande el siguiente request del VD estará mandando lo que recibió
-    //
-    public void action(){
-        // this.message 
-        String[] params = this.message.split(" ");
-        this.action = params[0];
-        // this.protocolFrom = params[1];
-        // this.protocolTo = params[2];
-        this.action = params[3];
-        String[] commands = params[4].split(",");
-        // -- Depedendiendo del action entonces se hacen cambios en los componentes 
-        for(String command : commands){
-            if(this.action.equals("cmd")){
-                String[] commandParams = command.split(":");
-                String componentName = commandParams[0];
-                String componentFunction = commandParams[1];
-                // Cambiar el valor del componente
-            }else{
-                // -- Si es msg entonces se manda el mensaje completo
-                String[] msgParams = command.split(":");
-                String componentName = msgParams[0];
-                String componentValue = msgParams[1];
-                // Cambiar el valor del componente
+    public void execute(Command command){
+        // Ejecutar el comando sobre esta instancia de VD
+        String action = command.getAction();
+        String component = command.getComponent();
+        String value = command.getValue();
+
+        if(action.equals("msg")){
+            // Cambiar el valor del componente
+            switch(component){
+                case "lcd":
+                    this.componentsMap.get("lcd").setValue(value);
+                    break;
+                case "switch0":
+                    this.componentsMap.get("switch0").setValue(value);
+                    break;
+                case "switch1":
+                    this.componentsMap.get("switch1").setValue(value);
+                    break;
+                case "fan":
+                    this.componentsMap.get("fan").setValue(value);
+                    break;
+                case "lrgb":
+                    this.componentsMap.get("lrgb").setValue(value);
+                    break;
+                case "lred":
+                    this.componentsMap.get("lred").setValue(value);
+                    break;
+                case "lgreen":
+                    this.componentsMap.get("lgreen").setValue(value);
+                    break;
+                case "heat":
+                    this.componentsMap.get("heat").setValue(value);
+                    break;
+                case "speed":
+                    this.componentsMap.get("speed").setValue(value);
+                    break;
+                case "slider0":
+                    this.componentsMap.get("slider0").setValue(value);
+                    break;
+                case "slider1":
+                    this.componentsMap.get("slider1").setValue(value);
+                    break;
+                case "slider2":
+                    this.componentsMap.get("slider2").setValue(value);
+                    break;
+                case "ledRgb":
+                    this.componentsMap.get("ledRgb").setValue(value);
+                    break;
+                case "pickColor":
+                    this.componentsMap.get("pickColor").setValue(value);
+                    break;
+                case "message":
+                    this.componentsMap.get("message").setValue(value);
+                    break;
+                default:
+                    break;
+            }
+        }else if(action.equals("cmd")){
+            // Cambiar la función del componente
+            switch(component){
+                case "control":
+                    this.componentsMap.get("control").setFunction(value);
+                    break;
+                case "speed":
+                    this.componentsMap.get("speed").setFunction(value);
+                    break;
+                case "slider0":
+                    this.componentsMap.get("slider0").setFunction(value);
+                    break;
+                case "slider1":
+                    this.componentsMap.get("slider1").setFunction(value);
+                    break;
+                case "slider2":
+                    this.componentsMap.get("slider2").setFunction(value);
+                    break;  
+                case "ledRgb":
+                    this.componentsMap.get("ledRgb").setFunction(value);
+                    break;
+                case "pickColor":
+                    this.componentsMap.get("pickColor").setFunction(value);
+                    break;
+                case "message":
+                    this.componentsMap.get("message").setFunction(value);
+                    break;
+                default:
+                    break;
             }
         }
     }
 
-    public VirtualDevice(String control, String speed, String slider0, String slider1, String slider2, String ledRgb, String pickColor, String message){
-        this.componentsMap = new HashMap<>();
-        this.componentsMap.put("control", new Component(control));
-        this.componentsMap.put("speed", new Component(speed));
-        this.componentsMap.put("slider0", new Component(slider0));
-        this.componentsMap.put("slider1", new Component(slider1));
-        this.componentsMap.put("slider2", new Component(slider2));
-        this.componentsMap.put("ledRgb", new Component(ledRgb));
-        this.componentsMap.put("pickColor", new Component(pickColor));
-        this.componentsMap.put("message", new Component(message));
-        this.componentsMap.put("space", new Component(" "));
-        this.message = message;
-        // this.vd = buildVD();
-    }
-
 
     // Devuelve el VD completo en dependencia de los atributos
-    // public String buildVD(){
-    //     String vd = this.control + this.speed + this.space + this.slider0 + this.slider1 + this.slider2 + this.space + this.ledRgb + this.space + this.pickColor + this.message;
-    //     return vd;
-    // }
-
-    public boolean equals(VirtualDevice vd){
-        return this.vd.equals(vd.vd);
+    public String buildVD(){//Sin msg
+        String vd = buildControl() + this.componentsMap.get("speed").value + this.componentsMap.get("space").value + this.componentsMap.get("slider0").value + this.componentsMap.get("slider1").value + this.componentsMap.get("slider2").value + this.componentsMap.get("space").value + this.componentsMap.get("ledRgb").value + this.componentsMap.get("space").value + this.componentsMap.get("pickColor").value;
+        return vd;
     }
 
-    public String getAction(){
-        return this.action;
+    public String buildControl(){
+        String control = "";
+        control += this.componentsMap.get("control").value;
+        control += this.componentsMap.get("speed").value;
+        control += this.componentsMap.get("slider0").value;
+        control += this.componentsMap.get("slider1").value;
+        control += this.componentsMap.get("slider2").value;
+        control += this.componentsMap.get("ledRgb").value;
+        control += this.componentsMap.get("pickColor").value;
+        control += this.componentsMap.get("message").value;
+        
+        // Convertir los primeros 8 bits a hexadecimal
+        int decimal = Integer.parseInt(control.substring(0,8), 2);
+        String hex = String.format("%02X", decimal);
+        return hex;
     }
-    
+
+    public HashMap<String, Component> getComponentsMap(){
+        return this.componentsMap;
+    }  
 
     // Getters
     public String getControl() {
@@ -204,4 +251,4 @@ public class VirtualDevice {
         return Objects.hash(getControl(), getSpeed(), getSlider0(), getSlider1(), 
                           getSlider2(), getLedRgb(), getPickColor(), getMessage());
     }
-}
+}//se puede recorrer por hashmap o por lista de componentes

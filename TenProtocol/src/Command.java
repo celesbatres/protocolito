@@ -1,7 +1,7 @@
 public class Command {
     String component;
     String action;
-    String value; // ya sea value de comp o su fun
+    String value; // value - component
 
     public Command(String component, String action, String value){
         this.component = component;
@@ -9,12 +9,15 @@ public class Command {
         this.value = value;
     }
 
-    public Component getComponent(){
-        Component component = new Component("");
-        if(this.action.equals("cmd")){
-            // component.set = this.action;
-            return component;
-        }
-        return null;
+    public String getAction(){
+        return this.action;
+    }
+
+    public String getValue(){
+        return this.value;
+    }
+
+    public String getComponent(){
+        return this.component;
     }
 }

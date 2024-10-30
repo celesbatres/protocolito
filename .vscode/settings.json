@@ -1,7 +1,8 @@
 {
     "java.project.referencedLibraries": [
-        "lib/**/*.jar",
-        "Driver/lib/jSerialComm-1.3.11.jar",
-        "TenProtocol/lib/jSerialComm-1.3.11.jar"
+        "c:\\Users\\celes\\OneDrive - Universidad Francisco Marroquin\\Desktop\\protocolito\\TenProtocol\\lib\\jSerialComm-1.3.11.jar"
+    ],
+    "java.project.sourcePaths": [
+        "TenProtocol\\src"
     ]
 }
