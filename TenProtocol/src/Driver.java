@@ -95,12 +95,16 @@ public class Driver {
     //convertir mensaje a string recibido del uart
     private static String recibirMensajeUART() {
         byte[] BufferUART = new byte[1024];
+        StringBuilder datos_recibidos = new StringBuilder();
+        
         try {
             while (true) {
                 int bytesRead = puertoUtilizar.readBytes(BufferUART, BufferUART.length);
                 if (bytesRead > 0) {
-                    String datos_recibidos = new String(BufferUART, 0, bytesRead);
-                    return datos_recibidos;
+                    datos_recibidos.append(new String(BufferUART, 0, bytesRead));
+                    if (datos_recibidos.toString().endsWith("\n")) {
+                        return datos_recibidos.toString().trim(); 
+                    }
                 }
             }
         } catch (Exception e) {
