@@ -75,7 +75,7 @@ public class Driver {
         }
     }
 
-    public static void enviarMensajeDriver() {
+    public static void enviarMensaje() {
         try (DatagramSocket udpSocket = new DatagramSocket()) {
             InetAddress appAddress = InetAddress.getByName("localhost");
 
