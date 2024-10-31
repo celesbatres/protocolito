@@ -37,17 +37,17 @@ public class TenProtocol {
            
         this.header = protocol;
         this.data = data;
-        if(protocol.equals("A")){
-            // Separar los comandos por espacios
-            String[] commands = data.split(" ");
-            for(String command : commands){
-                String[] commandParts = command.split(":");
-                String component = commandParts[0];
-                String value = commandParts[1];
-                Command command = new Command(value);
-                this.commandsString.add(command.toString());
-            }
-        }
+        // if(protocol.equals("A")){
+        //     // Separar los comandos por espacios
+        //     String[] commands = data.split(" ");
+        //     for(String command : commands){
+        //         String[] commandParts = command.split(":");
+        //         String component = commandParts[0];
+        //         String value = commandParts[1];
+        //         Command command = new Command(value);
+        //         this.commandsString.add(command.toString());
+        //     }
+        // }
         // Command command = new Command(protocol, data);
     }
 

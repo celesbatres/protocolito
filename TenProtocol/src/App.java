@@ -143,9 +143,6 @@ public class App {
                     message = response; // O manejar el caso según tus necesidades
                     // System.out.println("Advertencia: Response menor a 56 caracteres");
                 }
-                // if(vdPackets.isEmpty()){
-                // vdPackets.add("00F000000000000000000000");
-                // }
                 String commandLineHex = message.substring(24); // Valores Validos
                 System.out.println("Msg: " + commandLineHex);
 
@@ -160,7 +157,6 @@ public class App {
                                                                                 // formato: msg|cmd [component:value]
                                                                                 // [component:value]
                     System.out.println("Es comando");
-                    // VirtualDevice vd = new VirtualDevice(message);
                     vdPackets.add(message);
 
                     String[] commands = commandLine.split(" ");
@@ -168,14 +164,8 @@ public class App {
 
                     if (action.equals("msg")) {
                         System.out.println("Es mensaje");
-                        // ***********************************ENVIAR A
-                        // DRIVER***********************************
-                        // String appData = "";
-                        // String appHeader = "";
-                        // String msgTextArea = vd.getMessage(); // Lo de text area <- vommsnf
                         String direction = commands[1];
                         System.out.println("Direction: " + direction);
-                        // Revisar si es una dirección válida
 
                         TenProtocol tp = new TenProtocol(direction);
 
@@ -195,48 +185,25 @@ public class App {
                                 }
                             }
                         }
-                        // Changes in elements
-                        VirtualDevice newVD = new VirtualDevice(message);
 
-                        // Comparar hashmap de VD actual con el nuevo VD
+                        VirtualDevice newVD = new VirtualDevice(message); 
+
                         HashMap<String, Component> newVDMap = newVD.getComponentsMap();
                         HashMap<String, Component> currentVDMap = vdState.getComponentsMap();
-                        // recorrer el nuevo VD y comparar con el actual
-                        for(Map.Entry<String, Component> entry : newVDMap.entrySet()){
-                            String key = entry.getKey();
-                            Component newComponent = entry.getValue();
+
+                        for(String key : newVDMap.keySet()){
+                            Component newComponent = newVDMap.get(key);
                             Component currentComponent = currentVDMap.get(key);
+                            
+                            if(!newComponent.getValue().equals(currentComponent.getValue())){
+                                boolean isIN = currentComponent.getRol().equals("IN");
+                                if(isIN){
+                                    tp.commands.add(new Command(key, "msg", newComponent.getValue()));
+                                    tp.commandsString.add(key + ":" + newComponent.getValue());
+                                }
+                            }
                         }
 
-                        // HashMap<String, String> newVDMap = newVD.get();
-                        // Armar nuevo VD - solo para comparar cambios en elementos, tomando funciones y roles de VD actual
-                        // Recorrer VD actual
-
-
-    
-
-
-
-                        System.out.println("Commands: " + tp.commandsString);
-
-                        // for (String command : commands) {
-                        //     String[] parts = command.split(":");
-                        //     String commandText = parts[0];
-                        //     String value = parts[1];
-                        //     //
-                        //     if (commandsMap.containsKey(commandText)) {// Es un comando válido
-                        //         // Hacer comparaciones
-                        //         boolean isValid = commandsMap.get(commandText).matches(value);
-                        //         if (isValid) {
-                        //             tp.commands.add(new Command(commandText, "msg", value));
-                        //         }
-                        //     }
-
-                        //     // Revisar si el comando
-                        //     // commands.add(new Command(component, value));
-
-                        // }
-                        // Revisar cambios en los otros componentes - en dependencia si son IN o OUT
                         if (tp.commandsString.size() > 0) {
                             String packet = tp.buildPacket();
                             
@@ -252,65 +219,10 @@ public class App {
                         // COMPONENTE**************************
                         System.out.println("Se ejecutan comandos internamente");
                     }
-
-                    // Revisar cambios enel mensaje del text area
-
-                    // Revisar cambios en los otros componentes
-                    // vdPackets.add(message);
-
                 } else {
                     // System.out.println("Repetido");
                 }
 
-                // Cortar
-                // if(response.equals(vdPackets.getLast())){
-                // // Regresar el mismo mensaje
-                // }else{
-                // //Agregar el mensaje a la lista
-                // vdPackets.add(response);
-                // //Enviar el mensaje al driver
-
-                // //Crear un objeto VirtualDevice
-                // // VirtualDevice vd = new VirtualDevice(response);
-
-                // // Revisar si mandar a driver o cambiar el rol de un componente
-                // // sendToDriver(response);
-                // }
-                // Generar respuesta de 24 caracteres hexadecimales
-                /*
-                 * StringBuilder hexResponse = new StringBuilder();
-                 * for (int i = 0; i < 24; i++) {
-                 * hexResponse.append(Integer.toHexString((int) (Math.random() * 16)));
-                 * }
-                 * 
-                 * response = hexResponse.toString();
-                 * messages.add(response);
-                 */
-                // String lastMessage = vds.getLast();
-                // if (lastMessage != response) {
-                // // Enviar mensaje al driver
-                // Driver driver = new Driver();
-                // driver.receiveMessageFromApp(lastMessage);
-                // }
-
-                // VirtualDevice vd = new VirtualDevice(response);
-                // System.out.println("PickColor: "+vd.getPickColor());
-                // String response2 = getMessage(response.substring(24));
-                // String response2 = "FFF000000000000000000000737769746368305F6C6564313D31";
-                // System.out.println(response2);
-                // response = "FFF000000000000000000000737769746368305F6C6564313D31";
-                // // Envio al Driver
-                // Driver driver = new Driver();
-                // driver.receiveMessageFromApp();
-                // udpClient udpClient = new udpClient(response2);
-                // System.out.println("Ultimo mensaje guardado: "+vds.getLast());
-                // System.out.println("Mensaje recibido: "+response);
-                // sendToDriver(response);
-                // if(!response.equals(vds.getLast())){
-                // vds.add(response);
-                // System.out.println("Mensaje recibidosdss");
-                // //sendToDriver(response2);
-                // }
                 response = "FEF000000000000000000000";
                 exchange.sendResponseHeaders(200, response.length());
                 OutputStream os = exchange.getResponseBody();
@@ -336,6 +248,7 @@ public class App {
         return textoConvertido.toString();
     }
 
+    
     public static boolean isCommandLine(String msg) {
         if (!msg.endsWith("&")) {
             return false;
