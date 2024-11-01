@@ -7,36 +7,47 @@ public class TenProtocol {
     ArrayList<String> commandsString = new ArrayList<>();
     String data;
     String header;
-    // 
 
     public TenProtocol(String direction){
         this.header = direction;
         this.data = "";
-        this.commandsString = new ArrayList<>();
     }
 
+    public TenProtocol(String protocol, String data){
+        if(protocol.equals("F1")){
+            // Separar los comandos por espacios
+            String[] commands = data.split(" ");
+            for(String command : commands){
+                // Command command = new Command(command);
+                // this.commands.add(command);
+            }
+        }
+    }
+    public TenProtocol(){
+    }
 
     // Build the packet to send to the driver
     public String buildPacket(){
         // Packet = header + "-" + data //ip:vd
         // return header + "-" + data;
-        for(String command : commandsString){
-            this.data += command + " ";
+        for(Command command : commands){
+            String commandString = command.toString();
+            this.data += command.toString() + " ";
         }
         return this.header + "-" + this.data;
     }
 
     public boolean hasCommands(){
-        return commandsString.size() > 0;
+        return commands.size() > 0;
     }
 
-    public TenProtocol(String protocol, String data){
+    // public TenProtocol(String protocol, String data){
         // Armar un arraylist de comandos en formato string dependiendo del protocolo(por cada grupo) > 
         // Mejor en Command
         // Definir separator de comandos
            
-        this.header = protocol;
-        this.data = data;
+        // this.header = protocol;
+        // this.data = data;
         // if(protocol.equals("A")){
         //     // Separar los comandos por espacios
         //     String[] commands = data.split(" ");
@@ -49,7 +60,7 @@ public class TenProtocol {
         //     }
         // }
         // Command command = new Command(protocol, data);
-    }
+    // }
 
     public static void interpretTenProtocol(String packet){
         String input = packet; // "241:1 lred:1 lcd:1 msg:’Hola Grupo F1’";
@@ -70,6 +81,19 @@ public class TenProtocol {
         }
     }
 
+    public static void interpretOtherProtocol(String packet){
+        String[] commands = packet.split("-");
+        for(String command : commands){
+            String[] commandParts = command.split(":");
+            String component = commandParts[0];
+            String value = commandParts[1];
+            //Traducción de Protocolo
+        }
+        if(packet.startsWith("F1")){
+            // F1 Protocol
+
+        }
+    }
 
     //****************************************IMPORTANTE********************************************************* */
     // El ten protocol solamente sera la DATA que se envia en los paquetes, aparte son los headers que se agregan en el driver

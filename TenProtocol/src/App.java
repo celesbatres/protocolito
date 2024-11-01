@@ -13,6 +13,8 @@ import java.net.InetSocketAddress;
 import java.util.*;
 
 public class App {
+    public static String receivedPacket = "";
+    public static HashMap<String, Protocol> commandsMap;
 
     public static void main(String[] args) throws IOException {
         // Driver dr = new Driver();
@@ -39,6 +41,7 @@ public class App {
                 socket.receive(packet);
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Driver -> App " + message);
+                // Procesar y guardar el último mensaje recibido
                 // Enviar el mensaje al VD..
             }
         } catch (Exception e) {
@@ -61,6 +64,8 @@ public class App {
         }
     }
 
+
+
     static class PostHandler implements HttpHandler {
         // LinkedList<String> vds = new LinkedList<>(); // Lista de componentes
         // vds.add("FFF000000000000000000000737769746368305F6C6564313D31");
@@ -70,6 +75,7 @@ public class App {
         // private static final LinkedList<TenProtocol> tpPackets = new LinkedList<>();
         LinkedList<VirtualDevice> vds = new LinkedList<>();
         // LinkedList<VirtualDevice> vds = new LinkedList<>();
+        String[] inputValidos = {"switch0", "switch1", "slider0", "slider1", "slider2", "pick_color"};
 
         VirtualDevice vdState = new VirtualDevice("00F000000000000000000000");
         String[] commands = { "lcd", "switch0", "switch1", "fan", "lrgb", "lred", "lgreen", "heat", "speed", "slider0",
@@ -94,10 +100,6 @@ public class App {
                 put("msg", "^[A-Za-z0-9_]+$");
             }
         };
-        // Hashmap de comandos con su value y su regex
-        // LinkedList<Command> commands = new LinkedList<>();// Lista de comandos
-        // String[] protocols = {"00", "01", "02", "03", "04", "05", "06", "07", "08",
-        // "09", "0A", "0B", "0C", "0D", "0E", "0F"};
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -108,8 +110,7 @@ public class App {
             exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
 
             if ("OPTIONS".equals(exchange.getRequestMethod())) {
-                // Responder a las solicitudes preflight de CORS
-                exchange.sendResponseHeaders(204, -1); // Sin contenido
+                exchange.sendResponseHeaders(204, -1);
                 return;
             }
 
@@ -124,7 +125,6 @@ public class App {
                     body.append(line);
                 }
 
-                // Respuesta
                 String response = body.toString();
                 System.out.println("Response: " + response);
 
@@ -132,10 +132,7 @@ public class App {
                     vdPackets.add("00F000000000000000000000");
                 }
 
-                // if (tpPackets.isEmpty()) {
-                //     tpPackets.add(new TenProtocol(""));
-                // }
-                // 32 caracteres decimales - 64 caracteres hexadecimales - 24+64 = 88 caracteres
+                // 32 caracteres ascii = 64 caracteres hexadecimales - 24+64 = 88 caracteres
                 String message;
                 if (response.length() >= 88) {
                     message = response.substring(0, 88);
@@ -143,7 +140,7 @@ public class App {
                     message = response; // O manejar el caso según tus necesidades
                     // System.out.println("Advertencia: Response menor a 56 caracteres");
                 }
-                String commandLineHex = message.substring(24); // Valores Validos
+                String commandLineHex = message.substring(24);
                 System.out.println("Msg: " + commandLineHex);
 
                 String commandLine = getMessage(commandLineHex);
@@ -152,10 +149,7 @@ public class App {
                 String lastPacket = vdPackets.getLast();
                 // String lastTpPacket = tpPackets.getLast().buildPacket();
 
-                if (isCommandLine(commandLine) && !message.equals(lastPacket)) {// Se revisa que tenga al final un
-                                                                                // ampersand y que cumpla con el
-                                                                                // formato: msg|cmd [component:value]
-                                                                                // [component:value]
+                if (isCommandLine(commandLine) && !message.equals(lastPacket)) {
                     System.out.println("Es comando");
                     vdPackets.add(message);
 
@@ -204,7 +198,7 @@ public class App {
                             }
                         }
 
-                        if (tp.commandsString.size() > 0) {
+                        if (!tp.commandsString.isEmpty()) {
                             String packet = tp.buildPacket();
                             
                             // Agregar validación adicional
@@ -215,8 +209,10 @@ public class App {
                             }
                         }
                     } else if (action.equals("cmd")) {
-                        // ************************CAMBIAR EL FUNCTION DE UN
-                        // COMPONENTE**************************
+                        // Crear comandos
+                        // Recorrer tokens y reevisar elementos
+
+                        // Crear tabla de los que pueden ser outputs, y los que pueden ser inputs y outputs(todos son outputs)
                         System.out.println("Se ejecutan comandos internamente");
                     }
                 } else {
@@ -236,6 +232,60 @@ public class App {
                 os.close();
             }
         }
+    }
+
+    public static TenProtocol toTenProtocol(Protocol protocol, String data){
+        // String direction = msg.substring(2, 4);
+        String[] commands = data.split(protocol.commandDelimiter);//<- Delimitador de comandos
+        for(String command : commands){
+            String[] parts = command.split(protocol.commandSeparator);
+            String component = parts[0];
+            String value = parts[1];
+            // Checar en el protocolo si es valido
+        }
+        return new TenProtocol();
+    }
+
+    public static void buildProtocols(){
+        // F1
+        HashMap<String, String> commandsMap = new HashMap<>(){{
+            put("LCD", "lcd");
+            put("SW0", "switch0");
+            put("SW1", "switch1");
+            put("FAN", "fan");
+            put("LRGB", "lrgb");
+            put("LRED", "lred");
+            put("LGRE", "lgreen");
+            put("HEAT", "heat");
+            put("SPEED", "speed");
+            put("SLIDER0", "slider0");
+            put("SLIDER1", "slider1");
+            put("SLIDER2", "slider2");
+            put("L_COLOR", "lrgb_color");
+            put("COLOR", "pick_color");
+            put("MSG", "msg");
+        }};
+        HashMap<String, String> commandsRegex = new HashMap<>() {
+            {
+                put("LCD", "^[0-1]{1}$");
+                put("SW0", "^[0-1]{1}$");
+                put("SW1", "^[0-1]{1}$");
+                put("FAN", "^[0-1]{1}$");
+                put("LRGB", "^[0-1]{1}$");
+                put("LRED", "^[0-1]{1}$");
+                put("LGREEN", "^[0-1]{1}$");
+                put("HEAT", "^[0-1]{1}$");
+                put("SPEED", "^(1[0-5]|[0-9])$");
+                put("SLIDER0", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("SLIDER1", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("SLIDER2", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("L_COLOR", "^([A-Fa-f0-9]{6})$");
+                put("COLOR", "^([A-Fa-f0-9]{6})$");
+                put("MSG", "^[A-Za-z0-9_]+$");
+            }
+        };
+        App.commandsMap = new HashMap<>();
+        App.commandsMap.put("F1", new Protocol(commandsMap, commandsRegex, " ", ":"));
     }
 
     public static String getMessage(String message) {
@@ -274,5 +324,18 @@ public class App {
         }
 
         return true;
+    }
+
+    public static String processPacket(String protocol, String vd, String message){
+        String packet = "";
+        if(protocol.equals("F1")){
+            // TenProtocol
+            switch(vd){
+                case "00F000000000000000000000":
+                    return "00F000000000000000000000";
+            }
+        }
+        return packet;
+        // protocol-vd-message
     }
 }
