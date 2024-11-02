@@ -6,28 +6,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import java.net.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class App {
-    public static String receivedPacket = "";
-    public static HashMap<String, Protocol> commandsMap;
+    // public static String receivedPacket = "";
+    public static HashMap<String, Protocol> protocols = new HashMap<>();
+    private static final Map<String, ConcurrentLinkedQueue<String>> clientMessages = 
+        new ConcurrentHashMap<>();
+        private static final List<String> connectedClients = Collections.synchronizedList(new ArrayList<>());
 
     public static void main(String[] args) throws IOException {
-        // Driver dr = new Driver();
-        // String driverInfo = dr.toString();
-        // System.out.println(driverInfo);
-        // Crea el servidor en el puerto 8000
+
+        // Build protocols
+        buildProtocols();
+        // Create web server
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
         server.createContext("/post", new PostHandler());
-        server.setExecutor(null); // Usa el ejecutor por defecto
+        server.setExecutor(null);
         server.start();
         System.out.println("Servidor escuchando en http://localhost:8000/post");
-        // sendToDriver("Hola desde app");
 
+        // Receive messages from driver
         Thread recibo = new Thread(() -> recibodedriver());
         recibo.start();
 
@@ -37,12 +39,28 @@ public class App {
         try (DatagramSocket socket = new DatagramSocket(8001)) {
             byte[] buffer = new byte[1024];
             while (true) {
+                System.out.println("Esperando datos de driver...");
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Driver -> App " + message);
-                // Procesar y guardar el último mensaje recibido
-                // Enviar el mensaje al VD..
+                
+                // Parsear el mensaje: formato "ID-protocolo-datos"
+                String[] tokens = message.split("-");
+                int virtualDevice = Integer.parseInt(tokens[0]);  // ID del dispositivo virtual
+                System.out.println("Virtual Device: " + virtualDevice);
+                synchronized (connectedClients) {
+                    System.out.println("Clientes conectados:");
+                    for (int i = 0; i < connectedClients.size(); i++) {
+                        System.out.println("VD " + i + ": Cliente " + connectedClients.get(i));
+                        if (i == virtualDevice) {
+                            clientMessages.computeIfAbsent(connectedClients.get(i), k -> new ConcurrentLinkedQueue<>())
+                                .offer(message);
+                            System.out.println("Mensaje almacenado para VD " + virtualDevice + 
+                                " (Cliente: " + connectedClients.get(i) + ")");
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -64,7 +82,70 @@ public class App {
         }
     }
 
+    public static List<String> getConnectedClients() {
+        synchronized (connectedClients) {
+            return new ArrayList<>(connectedClients);
+        }
+    }
 
+    public static TenProtocol toTenProtocol(Protocol protocol, String data) {
+        String[] commands = data.split(protocol.commandDelimiter);// <- Delimitador de comandos
+        TenProtocol tp = new TenProtocol();
+        for (String command : commands) {
+            String[] parts = command.split(protocol.commandSeparator);
+            String component = parts[0];
+            String value = parts[1];
+            if (protocol.commandsRegex.containsKey(component)) {
+                if (value.matches(protocol.commandsRegex.get(component))) {
+                    tp.commands.add(new Command(component, "msg", value));
+                }
+            }
+        }
+        return tp;
+    }
+
+    public static void buildProtocols() {
+        // F1
+        HashMap<String, String> commandsMap = new HashMap<>() {
+            {
+                put("LCD", "lcd");
+                put("SW0", "switch0");
+                put("SW1", "switch1");
+                put("FAN", "fan");
+                put("LRGB", "lrgb");
+                put("LRED", "lred");
+                put("LGRE", "lgreen");
+                put("HEAT", "heat");
+                put("SPEED", "speed");
+                put("SLIDER0", "slider0");
+                put("SLIDER1", "slider1");
+                put("SLIDER2", "slider2");
+                put("L_COLOR", "lrgb_color");
+                put("COLOR", "pick_color");
+                put("MSG", "msg");
+            }
+        };
+        HashMap<String, String> commandsRegex = new HashMap<>() {
+            {
+                put("LCD", "^[0-1]{1}$");
+                put("SW0", "^[0-1]{1}$");
+                put("SW1", "^[0-1]{1}$");
+                put("FAN", "^[0-1]{1}$");
+                put("LRGB", "^[0-1]{1}$");
+                put("LRED", "^[0-1]{1}$");
+                put("LGREEN", "^[0-1]{1}$");
+                put("HEAT", "^[0-1]{1}$");
+                put("SPEED", "^(1[0-5]|[0-9])$");
+                put("SLIDER0", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("SLIDER1", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("SLIDER2", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("L_COLOR", "^([A-Fa-f0-9]{6})$");
+                put("COLOR", "^([A-Fa-f0-9]{6})$");
+                put("MSG", "^[A-Za-z0-9_]+$");
+            }
+        };
+        App.protocols.put("F1", new Protocol(commandsMap, commandsRegex, " ", ":"));
+    }
 
     static class PostHandler implements HttpHandler {
         // LinkedList<String> vds = new LinkedList<>(); // Lista de componentes
@@ -75,7 +156,7 @@ public class App {
         // private static final LinkedList<TenProtocol> tpPackets = new LinkedList<>();
         LinkedList<VirtualDevice> vds = new LinkedList<>();
         // LinkedList<VirtualDevice> vds = new LinkedList<>();
-        String[] inputValidos = {"switch0", "switch1", "slider0", "slider1", "slider2", "pick_color"};
+        String[] inputValidos = { "switch0", "switch1", "slider0", "slider1", "slider2", "pick_color" };
 
         VirtualDevice vdState = new VirtualDevice("00F000000000000000000000");
         String[] commands = { "lcd", "switch0", "switch1", "fan", "lrgb", "lred", "lgreen", "heat", "speed", "slider0",
@@ -103,11 +184,18 @@ public class App {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            ArrayList<String> receivedDriver = new ArrayList<>();
+            
 
             // Agregar encabezados CORS
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+            String clientAddress = exchange.getRemoteAddress().toString();
+            // connectedClients.add(clientAddress);
+            if (!connectedClients.contains(clientAddress)) {
+                connectedClients.add(clientAddress);
+            }
 
             if ("OPTIONS".equals(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
@@ -125,8 +213,23 @@ public class App {
                     body.append(line);
                 }
 
+                if (clientMessages.containsKey(clientAddress)) {
+                    ConcurrentLinkedQueue<String> clientQueue = clientMessages.get(clientAddress);
+                    System.out.println("Mensajes para cliente " + clientAddress + ":");
+                    for (String mensaje : clientQueue) {
+                        System.out.println("- " + mensaje);
+                    }
+                } else {
+                    System.out.println("No hay mensajes para el cliente " + clientAddress);
+                }
+
+                // ConcurrentLinkedQueue<String> clientQueue = clientMessages.computeIfAbsent(clientAddress, k -> new ConcurrentLinkedQueue<>());
+
+                // for (String mensaje : clientQueue) {
+                //     System.out.println("Cliente: " + clientAddress + " Mensaje en cola: " + mensaje);
+                // }
+
                 String response = body.toString();
-                System.out.println("Response: " + response);
 
                 if (vdPackets.isEmpty()) {
                     vdPackets.add("00F000000000000000000000");
@@ -141,13 +244,11 @@ public class App {
                     // System.out.println("Advertencia: Response menor a 56 caracteres");
                 }
                 String commandLineHex = message.substring(24);
-                System.out.println("Msg: " + commandLineHex);
+                // System.out.println("Msg: " + commandLineHex);
 
                 String commandLine = getMessage(commandLineHex);
                 System.out.println("Command Line: " + commandLine);
-
                 String lastPacket = vdPackets.getLast();
-                // String lastTpPacket = tpPackets.getLast().buildPacket();
 
                 if (isCommandLine(commandLine) && !message.equals(lastPacket)) {
                     System.out.println("Es comando");
@@ -180,18 +281,18 @@ public class App {
                             }
                         }
 
-                        VirtualDevice newVD = new VirtualDevice(message); 
+                        VirtualDevice newVD = new VirtualDevice(message);
 
                         HashMap<String, Component> newVDMap = newVD.getComponentsMap();
                         HashMap<String, Component> currentVDMap = vdState.getComponentsMap();
 
-                        for(String key : newVDMap.keySet()){
+                        for (String key : newVDMap.keySet()) {
                             Component newComponent = newVDMap.get(key);
                             Component currentComponent = currentVDMap.get(key);
-                            
-                            if(!newComponent.getValue().equals(currentComponent.getValue())){
+
+                            if (!newComponent.getValue().equals(currentComponent.getValue())) {
                                 boolean isIN = currentComponent.getRol().equals("IN");
-                                if(isIN){
+                                if (isIN) {
                                     tp.commands.add(new Command(key, "msg", newComponent.getValue()));
                                     tp.commandsString.add(key + ":" + newComponent.getValue());
                                 }
@@ -200,7 +301,7 @@ public class App {
 
                         if (!tp.commandsString.isEmpty()) {
                             String packet = tp.buildPacket();
-                            
+
                             // Agregar validación adicional
                             if (tpPackets.isEmpty() || !packet.equals(tpPackets.getLast())) {
                                 tpPackets.add(packet);
@@ -212,7 +313,8 @@ public class App {
                         // Crear comandos
                         // Recorrer tokens y reevisar elementos
 
-                        // Crear tabla de los que pueden ser outputs, y los que pueden ser inputs y outputs(todos son outputs)
+                        // Crear tabla de los que pueden ser outputs, y los que pueden ser inputs y
+                        // outputs(todos son outputs)
                         System.out.println("Se ejecutan comandos internamente");
                     }
                 } else {
@@ -234,59 +336,7 @@ public class App {
         }
     }
 
-    public static TenProtocol toTenProtocol(Protocol protocol, String data){
-        // String direction = msg.substring(2, 4);
-        String[] commands = data.split(protocol.commandDelimiter);//<- Delimitador de comandos
-        for(String command : commands){
-            String[] parts = command.split(protocol.commandSeparator);
-            String component = parts[0];
-            String value = parts[1];
-            // Checar en el protocolo si es valido
-        }
-        return new TenProtocol();
-    }
-
-    public static void buildProtocols(){
-        // F1
-        HashMap<String, String> commandsMap = new HashMap<>(){{
-            put("LCD", "lcd");
-            put("SW0", "switch0");
-            put("SW1", "switch1");
-            put("FAN", "fan");
-            put("LRGB", "lrgb");
-            put("LRED", "lred");
-            put("LGRE", "lgreen");
-            put("HEAT", "heat");
-            put("SPEED", "speed");
-            put("SLIDER0", "slider0");
-            put("SLIDER1", "slider1");
-            put("SLIDER2", "slider2");
-            put("L_COLOR", "lrgb_color");
-            put("COLOR", "pick_color");
-            put("MSG", "msg");
-        }};
-        HashMap<String, String> commandsRegex = new HashMap<>() {
-            {
-                put("LCD", "^[0-1]{1}$");
-                put("SW0", "^[0-1]{1}$");
-                put("SW1", "^[0-1]{1}$");
-                put("FAN", "^[0-1]{1}$");
-                put("LRGB", "^[0-1]{1}$");
-                put("LRED", "^[0-1]{1}$");
-                put("LGREEN", "^[0-1]{1}$");
-                put("HEAT", "^[0-1]{1}$");
-                put("SPEED", "^(1[0-5]|[0-9])$");
-                put("SLIDER0", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
-                put("SLIDER1", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
-                put("SLIDER2", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
-                put("L_COLOR", "^([A-Fa-f0-9]{6})$");
-                put("COLOR", "^([A-Fa-f0-9]{6})$");
-                put("MSG", "^[A-Za-z0-9_]+$");
-            }
-        };
-        App.commandsMap = new HashMap<>();
-        App.commandsMap.put("F1", new Protocol(commandsMap, commandsRegex, " ", ":"));
-    }
+    
 
     public static String getMessage(String message) {
         StringBuilder textoConvertido = new StringBuilder();
@@ -326,11 +376,11 @@ public class App {
         return true;
     }
 
-    public static String processPacket(String protocol, String vd, String message){
+    public static String processPacket(String protocol, String vd, String message) {
         String packet = "";
-        if(protocol.equals("F1")){
+        if (protocol.equals("F1")) {
             // TenProtocol
-            switch(vd){
+            switch (vd) {
                 case "00F000000000000000000000":
                     return "00F000000000000000000000";
             }

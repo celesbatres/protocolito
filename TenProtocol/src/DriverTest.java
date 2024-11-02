@@ -1,25 +1,44 @@
 import com.fazecast.jSerialComm.*;
+import java.util.Scanner;
 
 import java.io.IOException;
+
+/*import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.URL;*/
+//import java.nio.charset.StandardCharsets;
+
 import java.net.*;
 
-public class Driver {
+public class DriverTest {
 
+    // private static final int DriverPort = 5100;
+    // private static final int AplicacionPort = 5000;
     private static SerialPort puertoUtilizar;
+
 
     public static void main(String[] args) {
         // Inicializar el puerto serial una vez
-        abrirPuerto();
+        // abrirPuerto();
 
-        Thread receiverThread = new Thread(() -> recibeDatos());
+        // Thread receiverThread = new Thread(() -> recibeDatos());
+        // Scanner scanner = new Scanner(System.in);
+        // System.out.println("Ingrese un mensaje: ");
+        // String mensaje_recibido = scanner.nextLine();
+        // System.out.println("Mensaje recibido: " + mensaje_recibido);
+        // scanner.close();
         Thread senderThread = new Thread(() -> enviarMensaje());
 
-        receiverThread.start();
+        // receiverThread.start();
         senderThread.start();
     }
 
     public static void abrirPuerto() {
-        puertoUtilizar = SerialPort.getCommPort("COM4");
+        puertoUtilizar = SerialPort.getCommPort("COM5");
         puertoUtilizar.setComPortParameters(115200, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
         puertoUtilizar.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING, 0, 0);
 
@@ -39,7 +58,7 @@ public class Driver {
             while (true) {
                 String message = convertirMensajeUDP(udpSocket, receiveBuffer);
                 if (message != null) {
-                    //System.out.println("Datos de app a driver " + message);
+                    System.out.println("Datos de app a driver " + message);
                     sendToUART(message, 0);
                 }
             }
@@ -65,12 +84,13 @@ public class Driver {
     public static void enviarMensaje() {
         try (DatagramSocket udpSocket = new DatagramSocket()) {
             InetAddress appAddress = InetAddress.getByName("localhost");
-
+            Scanner scanner = new Scanner(System.in);
+            
             while (true) {
-                String mensaje_recibido = recibirMensajeUART();
+                System.out.print("Ingrese un mensaje: ");
+                String mensaje_recibido = scanner.nextLine();
                 if (mensaje_recibido != null && !mensaje_recibido.isEmpty()) {
                     enviarUDP(udpSocket, mensaje_recibido, appAddress);
-                    System.out.println("Mensaje enviado de física a driver " + mensaje_recibido);
                 }
             }
         } catch (Exception e) {
@@ -81,21 +101,24 @@ public class Driver {
 
     //convertir mensaje a string recibido del uart
     private static String recibirMensajeUART() {
-        String datos_recibidos = "";
         byte[] BufferUART = new byte[1024];
-        while (true) {
-            int bytesRead = puertoUtilizar.readBytes(BufferUART, BufferUART.length);
-            if (bytesRead > 0) {
-                datos_recibidos = new String(BufferUART, 0, bytesRead);
-                //System.out.println("FISICA -> Driver: " + datos_recibidos);     
-                break; // Sale del bucle después de recibir la respuesta
-            }
-        }
-        return datos_recibidos;
-            
+        StringBuilder datos_recibidos = new StringBuilder();
         
+        try {
+            while (true) {
+                int bytesRead = puertoUtilizar.readBytes(BufferUART, BufferUART.length);
+                if (bytesRead > 0) {
+                    datos_recibidos.append(new String(BufferUART, 0, bytesRead));
+                    if (datos_recibidos.toString().endsWith("\n")) {
+                        return datos_recibidos.toString().trim(); 
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al leer datos de UART: " + e.getMessage());
+        }
+        return null; 
     }
-
 
     private static void enviarUDP(DatagramSocket udpSocket, String message, InetAddress address) {
         try {
