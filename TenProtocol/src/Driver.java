@@ -1,11 +1,22 @@
 import com.fazecast.jSerialComm.*;
 
 import java.io.IOException;
+
+/*import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.URL;*/
+//import java.nio.charset.StandardCharsets;
+
 import java.net.*;
 
 public class Driver {
 
     private static SerialPort puertoUtilizar;
+
 
     public static void main(String[] args) {
         // Inicializar el puerto serial una vez
