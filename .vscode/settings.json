@@ -4,5 +4,6 @@
     ],
     "java.project.sourcePaths": [
         "TenProtocol\\src"
-    ]
+    ],
+    "cmake.sourceDirectory": "C:/Users/celes/Desktop/protocolito/raspberry-pi-pico-spi-daisy-chain"
 }

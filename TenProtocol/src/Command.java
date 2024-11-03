@@ -20,4 +20,8 @@ public class Command {
     public String getComponent(){
         return this.component;
     }
+
+    public String toString(){
+        return this.component + ":" + this.value;
+    }
 }

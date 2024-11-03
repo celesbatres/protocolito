@@ -31,7 +31,7 @@ public class VirtualDevice {
         this.componentsMap.put("ledRgb", new Component(vd.substring(11, 17)));
         this.componentsMap.put("space", new Component(vd.substring(17, 18)));
         this.componentsMap.put("pickColor", new Component(vd.substring(18, 24)));
-
+        this.componentsMap.put("message", new Component(vd.substring(24)));
         this.vd = vd;
         String msg = vd.substring(24);
         // Convertir el mensaje hexadecimal a texto
@@ -134,6 +134,10 @@ public class VirtualDevice {
         }
     }
 
+    public void eraseTextArea(){
+        this.componentsMap.get("message").setValue("");
+    }
+
 
     // Devuelve el VD completo en dependencia de los atributos
     public String buildVD(){//Sin msg
@@ -142,18 +146,22 @@ public class VirtualDevice {
     }
 
     public String buildControl(){
-        String control = "";
-        control += this.componentsMap.get("control").value;
-        control += this.componentsMap.get("speed").value;
-        control += this.componentsMap.get("slider0").value;
-        control += this.componentsMap.get("slider1").value;
-        control += this.componentsMap.get("slider2").value;
-        control += this.componentsMap.get("ledRgb").value;
-        control += this.componentsMap.get("pickColor").value;
-        control += this.componentsMap.get("message").value;
         
+        // Obtener los 8 bits del control
+        String control = "";
+        control += this.componentsMap.get("lcd").value;
+        control += this.componentsMap.get("switch0").value; 
+        control += this.componentsMap.get("switch1").value;
+        control += this.componentsMap.get("fan").value;
+        control += this.componentsMap.get("lrgb").value;
+        control += this.componentsMap.get("lred").value;
+        control += this.componentsMap.get("lgreen").value;
+        control += this.componentsMap.get("heat").value;
+        
+        // Convertir binario a decimal
+        int decimal = Integer.parseInt(control, 2);
         // Convertir los primeros 8 bits a hexadecimal
-        int decimal = Integer.parseInt(control.substring(0,8), 2);
+        // int decimal = Integer.parseInt(control.substring(0,8), 2);
         String hex = String.format("%02X", decimal);
         return hex;
     }

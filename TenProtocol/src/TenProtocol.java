@@ -4,7 +4,6 @@ import java.util.regex.Pattern;
 
 public class TenProtocol {
     ArrayList<Command> commands = new ArrayList<>();
-    ArrayList<String> commandsString = new ArrayList<>();
     String data;
     String header;
 
@@ -16,14 +15,13 @@ public class TenProtocol {
     public TenProtocol(String protocol, String data){
         if(protocol.equals("F1")){
             // Separar los comandos por espacios
-            String[] commands = data.split(" ");
-            for(String command : commands){
-                // Command command = new Command(command);
-                // this.commands.add(command);
-            }
+            // String[] commands = data.split(" ");
+            // for(String command : commands){
+            //     // Command command = new Command(command);
+            //     // this.commands.add(command);
+
+            // }
         }
-    }
-    public TenProtocol(){
     }
 
     // Build the packet to send to the driver
@@ -31,10 +29,10 @@ public class TenProtocol {
         // Packet = header + "-" + data //ip:vd
         // return header + "-" + data;
         for(Command command : commands){
-            String commandString = command.toString();
+            // String commandString = command.toString();
             this.data += command.toString() + " ";
         }
-        return this.header + "-" + this.data;
+        return this.header + "|" + this.data;
     }
 
     public boolean hasCommands(){

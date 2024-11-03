@@ -46,9 +46,12 @@ public class App {
                 System.out.println("Driver -> App " + message);
                 
                 // Parsear el mensaje: formato "ID-protocolo-datos"
-                String[] tokens = message.split("-");
-                int virtualDevice = Integer.parseInt(tokens[0]);  // ID del dispositivo virtual
+                String[] tokens = message.split("|");
+                String protocol = tokens[0];
+                int virtualDevice = Integer.parseInt(tokens[1]);  // ID del dispositivo virtual
                 System.out.println("Virtual Device: " + virtualDevice);
+                String data = tokens[2];
+                String processedMessage = processPacket(protocol, data);
                 synchronized (connectedClients) {
                     System.out.println("Clientes conectados:");
                     for (int i = 0; i < connectedClients.size(); i++) {
@@ -158,7 +161,7 @@ public class App {
         // LinkedList<VirtualDevice> vds = new LinkedList<>();
         String[] inputValidos = { "switch0", "switch1", "slider0", "slider1", "slider2", "pick_color" };
 
-        VirtualDevice vdState = new VirtualDevice("00F000000000000000000000");
+        // VirtualDevice vdState = new VirtualDevice(response);
         String[] commands = { "lcd", "switch0", "switch1", "fan", "lrgb", "lred", "lgreen", "heat", "speed", "slider0",
                 "slider1", "slider2", "lrgb_color", "pick_color", "msg" };
         // TODO: Cabiar los value del hashmap a ReGex
@@ -185,8 +188,7 @@ public class App {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             ArrayList<String> receivedDriver = new ArrayList<>();
-            
-
+        
             // Agregar encabezados CORS
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -223,17 +225,13 @@ public class App {
                     System.out.println("No hay mensajes para el cliente " + clientAddress);
                 }
 
-                // ConcurrentLinkedQueue<String> clientQueue = clientMessages.computeIfAbsent(clientAddress, k -> new ConcurrentLinkedQueue<>());
-
-                // for (String mensaje : clientQueue) {
-                //     System.out.println("Cliente: " + clientAddress + " Mensaje en cola: " + mensaje);
-                // }
-
                 String response = body.toString();
 
                 if (vdPackets.isEmpty()) {
                     vdPackets.add("00F000000000000000000000");
                 }
+
+                VirtualDevice vdState = new VirtualDevice(vdPackets.getLast());
 
                 // 32 caracteres ascii = 64 caracteres hexadecimales - 24+64 = 88 caracteres
                 String message;
@@ -275,13 +273,15 @@ public class App {
                                 // Hacer comparaciones
                                 System.out.println("Command: " + commandsMap.get(component));
                                 if (value.matches(commandsMap.get(component))) {// Tiene un valor válido para asignarle
-                                    tp.commandsString.add(command);
-                                    System.out.println("Command added: " + tp.commandsString);
+                                    tp.commands.add(new Command(component, "msg", value));
                                 }
                             }
                         }
 
                         VirtualDevice newVD = new VirtualDevice(message);
+                        String newVDString = newVD.buildVD();
+                        System.out.println("Test new VD: " + newVDString);
+
 
                         HashMap<String, Component> newVDMap = newVD.getComponentsMap();
                         HashMap<String, Component> currentVDMap = vdState.getComponentsMap();
@@ -294,19 +294,17 @@ public class App {
                                 boolean isIN = currentComponent.getRol().equals("IN");
                                 if (isIN) {
                                     tp.commands.add(new Command(key, "msg", newComponent.getValue()));
-                                    tp.commandsString.add(key + ":" + newComponent.getValue());
                                 }
                             }
                         }
 
-                        if (!tp.commandsString.isEmpty()) {
+                        if (!tp.commands.isEmpty()) {
                             String packet = tp.buildPacket();
-
                             // Agregar validación adicional
                             if (tpPackets.isEmpty() || !packet.equals(tpPackets.getLast())) {
                                 tpPackets.add(packet);
                                 System.out.println("TenProtocol: " + packet);
-                                sendToDriver(packet);
+                                // sendToDriver(packet);
                             }
                         }
                     } else if (action.equals("cmd")) {
@@ -319,9 +317,21 @@ public class App {
                     }
                 } else {
                     // System.out.println("Repetido");
-                }
 
-                response = "FEF000000000000000000000";
+                } 
+
+
+                // Revisar lista de mensajes pendientes para esta VD
+                /*if (!clientMessages.get(clientAddress).isEmpty()) {
+                    System.out.println("Mensajes para cliente " + clientAddress + ":");
+                    for (String mensaje : clientMessages.get(clientAddress)) {
+                        System.out.println("- " + mensaje);
+                    }
+                }*/
+                vdState.eraseTextArea();
+                response = vdState.buildVD();
+
+                // response = "FEF000000000000000000000";
                 exchange.sendResponseHeaders(200, response.length());
                 OutputStream os = exchange.getResponseBody();
                 os.write(response.getBytes());
@@ -367,7 +377,7 @@ public class App {
 
         // Verificar que todos los elementos después del primero tengan formato
         // componente:valor
-        for (int i = 1; i < parts.length; i++) {
+        for (int i = 2; i < parts.length; i++) {
             if (!parts[i].matches("[a-zA-Z0-9_]+:[a-zA-Z0-9_]+")) {
                 return false;
             }
@@ -376,14 +386,11 @@ public class App {
         return true;
     }
 
-    public static String processPacket(String protocol, String vd, String message) {
-        String packet = "";
+    // Devuelve un array de comandos para luego ejecutarlos en VD
+    public static ArrayList<Command> processPacket(String protocol, String message) {
+        ArrayList<Command> commands = new ArrayList<>();
         if (protocol.equals("F1")) {
-            // TenProtocol
-            switch (vd) {
-                case "00F000000000000000000000":
-                    return "00F000000000000000000000";
-            }
+            
         }
         return packet;
         // protocol-vd-message
