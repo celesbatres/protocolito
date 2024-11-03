@@ -214,6 +214,7 @@ public class App {
                     body.append(line);
                 }
 
+                /* 
                 if (clientMessages.containsKey(clientAddress)) {
                     ConcurrentLinkedQueue<String> clientQueue = clientMessages.get(clientAddress);
                     System.out.println("Mensajes para cliente " + clientAddress + ":");
@@ -222,7 +223,7 @@ public class App {
                     }
                 } else {
                     System.out.println("No hay mensajes para el cliente " + clientAddress);
-                }
+                }*/
 
                 String response = body.toString();
 
@@ -231,35 +232,32 @@ public class App {
                 }
 
                 VirtualDevice vdState = new VirtualDevice(vdPackets.getLast());
-
+                
                 // 32 caracteres ascii = 64 caracteres hexadecimales - 24+64 = 88 caracteres
                 String message;
                 if (response.length() >= 88) {
                     message = response.substring(0, 88);
                 } else {
-                    message = response; // O manejar el caso según tus necesidades
-                    // System.out.println("Advertencia: Response menor a 56 caracteres");
+                    message = response; 
                 }
                 String commandLineHex = message.substring(24);
-                // System.out.println("Msg: " + commandLineHex);
 
                 String commandLine = getMessage(commandLineHex);
-                System.out.println("Command Line: " + commandLine);
-                String lastPacket = vdPackets.getLast();
-
-                if (isCommandLine(commandLine) && !message.equals(lastPacket)) {
-                    System.out.println("Es comando");
-                    vdPackets.add(message);
-
+                // System.out.println("Command Line: " + commandLine);
+                vdPackets.add(message);
+                
+                if (isCommandLine(commandLine) && !message.equals(vdState.buildVD())) {                
+                    
                     String[] commands = commandLine.split(" ");
                     String action = commands[0];
 
                     if (action.equals("msg")) {
                         System.out.println("Es mensaje");
-                        String direction = commands[1];
-                        System.out.println("Direction: " + direction);
-
-                        TenProtocol tp = new TenProtocol(direction);
+                        String direction = commands[1].split(":")[0];
+                        String vd = commands[1].split(":")[1];
+                        String header = direction + "|" + vd;
+                        
+                        TenProtocol tp = new TenProtocol(header);
 
                         // Commands
                         for (int i = 2; i < commands.length - 1; i++) {
@@ -278,9 +276,8 @@ public class App {
                         }
 
                         VirtualDevice newVD = new VirtualDevice(message);
-                        String newVDString = newVD.buildVD();
-                        System.out.println("Test new VD: " + newVDString);
-
+                        // String newVDString = newVD.buildVD();
+                        // System.out.println("Test new VD: " + newVDString);
 
                         HashMap<String, Component> newVDMap = newVD.getComponentsMap();
                         HashMap<String, Component> currentVDMap = vdState.getComponentsMap();
@@ -392,6 +389,6 @@ public class App {
             
         }
         return commands;
-        // protocol-vd-message
+        // protocol|vd|message
     }
 }
