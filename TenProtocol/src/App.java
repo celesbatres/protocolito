@@ -392,7 +392,7 @@ public class App {
         if (protocol.equals("F1")) {
             
         }
-        return packet;
+        return commands;
         // protocol-vd-message
     }
 }

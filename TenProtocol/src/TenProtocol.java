@@ -12,16 +12,10 @@ public class TenProtocol {
         this.data = "";
     }
 
-    public TenProtocol(String protocol, String data){
-        if(protocol.equals("F1")){
-            // Separar los comandos por espacios
-            // String[] commands = data.split(" ");
-            // for(String command : commands){
-            //     // Command command = new Command(command);
-            //     // this.commands.add(command);
 
-            // }
-        }
+    public TenProtocol(){
+        this.data = "";
+        this.header = "";
     }
 
     // Build the packet to send to the driver
