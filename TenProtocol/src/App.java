@@ -51,7 +51,6 @@ public class App {
                 int virtualDevice = Integer.parseInt(tokens[1]);  // ID del dispositivo virtual
                 System.out.println("Virtual Device: " + virtualDevice);
                 String data = tokens[2];
-                String processedMessage = processPacket(protocol, data);
                 synchronized (connectedClients) {
                     System.out.println("Clientes conectados:");
                     for (int i = 0; i < connectedClients.size(); i++) {
