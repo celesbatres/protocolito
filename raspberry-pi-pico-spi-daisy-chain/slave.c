@@ -47,10 +47,11 @@ void spiReceiveISR () {
     
       if(f->to == 0x64) {
         uart_puts(UART_ID, f->data);
+       // uart_write_blocking(UART_ID, f->data, f->length);
       } else {
         master_propagate(f);
       }
-    
+     
     
   free(f->data);
   free(f);

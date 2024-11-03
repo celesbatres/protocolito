@@ -20,7 +20,7 @@
 
 int main (void) {
   // Enable UART
-  //stdio_init_all ();
+  stdio_init_all ();
 
   slave_init ();
   master_init ();
@@ -58,7 +58,7 @@ int main (void) {
   while (1) {
     //struct receive_elem *elem = NULL;
     char c = uart_getc(UART_ID);
-      uart_putc(UART_ID, c);
+      //uart_putc(UART_ID, c);
         if (c == '\n' || c == '\r')
         {
             data[buffer_index] = '\0';
@@ -76,13 +76,13 @@ int main (void) {
 
 void create_frame(char data[]){
     struct frame *f = malloc(sizeof *f);
-    f->to = 0xF1;
+    f->to = 0x02;
     f->from = 0x64;
     f->length = strlen(data) + 1;
     f->header_checksum = ((f->to + f->from + f->length) ^ 0xFF) + 0x1;    // checksum is ALWAYS calculated the same
 
     f->data = malloc(f->length);
-    uart_puts(UART_ID, "prueba");
+    //uart_puts(UART_ID, "prueba");
     memcpy(f->data, data, f->length);
 
     /*char send_data[200];
