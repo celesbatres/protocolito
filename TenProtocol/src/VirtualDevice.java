@@ -28,10 +28,10 @@ public class VirtualDevice {
         this.componentsMap.put("slider1", new Component(vd.substring(6, 8)));
         this.componentsMap.put("slider2", new Component(vd.substring(8, 10)));
         this.componentsMap.put("space", new Component(vd.substring(10, 11)));
-        this.componentsMap.put("ledRgb", new Component(vd.substring(11, 17)));
+        this.componentsMap.put("lrgb_color", new Component(vd.substring(11, 17)));
         this.componentsMap.put("space", new Component(vd.substring(17, 18)));
-        this.componentsMap.put("pickColor", new Component(vd.substring(18, 24)));
-        this.componentsMap.put("message", new Component(vd.substring(24)));
+        this.componentsMap.put("pick_color", new Component(vd.substring(18, 24)));
+        this.componentsMap.put("msg", new Component(vd.substring(24)));
         this.vd = vd;
         String msg = vd.substring(24);
         // Convertir el mensaje hexadecimal a texto
@@ -89,14 +89,15 @@ public class VirtualDevice {
                 case "slider2":
                     this.componentsMap.get("slider2").setValue(value);
                     break;
-                case "ledRgb":
-                    this.componentsMap.get("ledRgb").setValue(value);
+                case "lrgb_color":
+                    this.componentsMap.get("lrgb_color").setValue(value);
                     break;
-                case "pickColor":
-                    this.componentsMap.get("pickColor").setValue(value);
+                case "pick_color":
+                    this.componentsMap.get("pick_color").setValue(value);
                     break;
-                case "message":
-                    this.componentsMap.get("message").setValue(value);
+                case "msg":
+                    String msg = toHex(value);
+                    this.componentsMap.get("msg").setFunction(msg);
                     break;
                 default:
                     break;
@@ -119,14 +120,15 @@ public class VirtualDevice {
                 case "slider2":
                     this.componentsMap.get("slider2").setFunction(value);
                     break;  
-                case "ledRgb":
-                    this.componentsMap.get("ledRgb").setFunction(value);
+                case "lrgb_color":
+                    this.componentsMap.get("lrgb_color").setFunction(value);
                     break;
-                case "pickColor":
-                    this.componentsMap.get("pickColor").setFunction(value);
+                case "pick_color":
+                    this.componentsMap.get("pick_color").setFunction(value);
                     break;
-                case "message":
-                    this.componentsMap.get("message").setFunction(value);
+                case "msg":
+                    String msg = toHex(value);
+                    this.componentsMap.get("msg").setFunction(msg);
                     break;
                 default:
                     break;
@@ -135,13 +137,18 @@ public class VirtualDevice {
     }
 
     public void eraseTextArea(){
-        this.componentsMap.get("message").setValue("");
+        this.componentsMap.get("msg").setValue("");
     }
 
+    public String toHex(String value){
+        int decimal = Integer.parseInt(value, 2);
+        String hex = String.format("%02X", decimal);
+        return hex;
+    }
 
     // Devuelve el VD completo en dependencia de los atributos
     public String buildVD(){//Sin msg
-        String vd = buildControl() + this.componentsMap.get("speed").value + this.componentsMap.get("space").value + this.componentsMap.get("slider0").value + this.componentsMap.get("slider1").value + this.componentsMap.get("slider2").value + this.componentsMap.get("space").value + this.componentsMap.get("ledRgb").value + this.componentsMap.get("space").value + this.componentsMap.get("pickColor").value;
+        String vd = buildControl() + this.componentsMap.get("speed").value + this.componentsMap.get("space").value + this.componentsMap.get("slider0").value + this.componentsMap.get("slider1").value + this.componentsMap.get("slider2").value + this.componentsMap.get("space").value + this.componentsMap.get("lrgb_color").value + this.componentsMap.get("space").value + this.componentsMap.get("pick_color").value + this.componentsMap.get("msg").value;
         return vd;
     }
 
@@ -224,17 +231,16 @@ public class VirtualDevice {
         this.componentsMap.get("slider2").setValue(slider2);
     }
 
-    public void setLedRgb(String ledRgb) {
-        this.componentsMap.get("ledRgb").setValue(ledRgb);
+    public void setLedRgb(String lrgb_color) {
+        this.componentsMap.get("lrgb_color").setValue(lrgb_color);
     }
 
-    public void setPickColor(String pickColor) {
-        this.componentsMap.get("pickColor").setValue(pickColor);
+    public void setPickColor(String pick_color) {
+        this.componentsMap.get("pick_color").setValue(pick_color);
     }
 
-    public void setMessage(String message) {
-        this.componentsMap.get("message").setValue(message);
-        this.message = message;
+    public void setMessage(String msg) {
+        this.componentsMap.get("msg").setValue(msg);
     }
 
     @Override

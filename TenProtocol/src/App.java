@@ -14,9 +14,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class App {
     // public static String receivedPacket = "";
     public static HashMap<String, Protocol> protocols = new HashMap<>();
-    private static final Map<String, ConcurrentLinkedQueue<String>> clientMessages = 
-        new ConcurrentHashMap<>();
-        private static final List<String> connectedClients = Collections.synchronizedList(new ArrayList<>());
+    private static final Map<String, ConcurrentLinkedQueue<String>> clientMessages = new ConcurrentHashMap<>();
+    private static final List<String> connectedClients = Collections.synchronizedList(new ArrayList<>());
 
     public static void main(String[] args) throws IOException {
 
@@ -44,22 +43,23 @@ public class App {
                 socket.receive(packet);
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Driver -> App " + message);
-                
+
                 // Parsear el mensaje: formato "ID-protocolo-datos"
-                String[] tokens = message.split("|");
+                String[] tokens = message.split("\\|");
                 String protocol = tokens[0];
-                int virtualDevice = Integer.parseInt(tokens[1]);  // ID del dispositivo virtual
+                System.out.println("Protocol: " + tokens[1]);
+                int virtualDevice = Integer.parseInt(tokens[1], 16); // ID del dispositivo virtual
                 System.out.println("Virtual Device: " + virtualDevice);
-                String data = tokens[2];
+                String data = protocol + "|" + tokens[2];
                 synchronized (connectedClients) {
                     System.out.println("Clientes conectados:");
                     for (int i = 0; i < connectedClients.size(); i++) {
                         System.out.println("VD " + i + ": Cliente " + connectedClients.get(i));
                         if (i == virtualDevice) {
                             clientMessages.computeIfAbsent(connectedClients.get(i), k -> new ConcurrentLinkedQueue<>())
-                                .offer(message);
-                            System.out.println("Mensaje almacenado para VD " + virtualDevice + 
-                                " (Cliente: " + connectedClients.get(i) + ")");
+                                    .offer(data);
+                            System.out.println("Mensaje almacenado para VD " + virtualDevice +
+                                    " (Cliente: " + connectedClients.get(i) + ")");
                         }
                     }
                 }
@@ -146,7 +146,35 @@ public class App {
                 put("MSG", "^[A-Za-z0-9_]+$");
             }
         };
-        App.protocols.put("F1", new Protocol(commandsMap, commandsRegex, " ", ":"));
+        App.protocols.put("1", new Protocol(commandsMap, commandsRegex, " ", ":"));
+
+        // Si los protocolos no tienen un delimitador de comandos entonces simplemente
+        // se crea el protocolo con un string vacío
+        // Al de barrios agregar un hashmap de commandLength
+        commandsMap = new HashMap<>() {
+            {
+                put("0", "lcd");
+                put("1", "switch0");
+                put("2", "switch1");
+                put("3", "fan");
+                put("4", "lrgb");
+                put("5", "lred");
+                put("6", "lgreen");
+                put("7", "heat");
+                put("8", "speed");
+                put("A", "slider0");
+                put("B", "slider1");
+                put("C", "slider2");
+                put("D", "lrgb_color");
+                put("E", "pick_color");
+                put("F", "msg");
+            }
+        };
+        commandsRegex = new HashMap<>() {
+            {
+                put("CMD", "^[A-Za-z0-9_]+$");
+            }
+        };
     }
 
     static class PostHandler implements HttpHandler {
@@ -187,7 +215,7 @@ public class App {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             ArrayList<String> receivedDriver = new ArrayList<>();
-        
+
             // Agregar encabezados CORS
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -214,17 +242,6 @@ public class App {
                     body.append(line);
                 }
 
-                /* 
-                if (clientMessages.containsKey(clientAddress)) {
-                    ConcurrentLinkedQueue<String> clientQueue = clientMessages.get(clientAddress);
-                    System.out.println("Mensajes para cliente " + clientAddress + ":");
-                    for (String mensaje : clientQueue) {
-                        System.out.println("- " + mensaje);
-                    }
-                } else {
-                    System.out.println("No hay mensajes para el cliente " + clientAddress);
-                }*/
-
                 String response = body.toString();
 
                 if (vdPackets.isEmpty()) {
@@ -232,22 +249,22 @@ public class App {
                 }
 
                 VirtualDevice vdState = new VirtualDevice(vdPackets.getLast());
-                
+
                 // 32 caracteres ascii = 64 caracteres hexadecimales - 24+64 = 88 caracteres
                 String message;
                 if (response.length() >= 88) {
                     message = response.substring(0, 88);
                 } else {
-                    message = response; 
+                    message = response;
                 }
                 String commandLineHex = message.substring(24);
 
                 String commandLine = getMessage(commandLineHex);
                 // System.out.println("Command Line: " + commandLine);
-                vdPackets.add(message);
-                
-                if (isCommandLine(commandLine) && !message.equals(vdState.buildVD())) {                
-                    
+
+                if (isCommandLine(commandLine) && !message.equals(vdState.buildVD())) {
+                    vdPackets.add(message);
+
                     String[] commands = commandLine.split(" ");
                     String action = commands[0];
 
@@ -256,7 +273,7 @@ public class App {
                         String direction = commands[1].split(":")[0];
                         String vd = commands[1].split(":")[1];
                         String header = direction + "|" + vd;
-                        
+
                         TenProtocol tp = new TenProtocol(header);
 
                         // Commands
@@ -304,30 +321,37 @@ public class App {
                             }
                         }
                     } else if (action.equals("cmd")) {
-                        // Crear comandos
-                        // Recorrer tokens y reevisar elementos
-
-                        // Crear tabla de los que pueden ser outputs, y los que pueden ser inputs y
-                        // outputs(todos son outputs)
                         System.out.println("Se ejecutan comandos internamente");
                     }
                 } else {
-                    // System.out.println("Repetido");
+                    if (clientMessages.containsKey(clientAddress)) {
+                        ConcurrentLinkedQueue<String> clientQueue = clientMessages.get(clientAddress);
+                        System.out.println("Mensajes para cliente " + clientAddress + ":");
 
-                } 
+                        for (String mensaje : clientQueue) {
 
-
-                // Revisar lista de mensajes pendientes para esta VD
-                /*if (!clientMessages.get(clientAddress).isEmpty()) {
-                    System.out.println("Mensajes para cliente " + clientAddress + ":");
-                    for (String mensaje : clientMessages.get(clientAddress)) {
-                        System.out.println("- " + mensaje);
+                            System.out.println("- " + mensaje);
+                            String protocol = mensaje.split("\\|")[0];
+                            String data = mensaje.split("\\|")[1];
+                            System.out.println("Data: " + data);
+                            ArrayList<Command> commands = processPacket(protocol, App.protocols.get(protocol), data);
+                            vdState.eraseTextArea();
+                            for (Command command : commands) {
+                                System.out.println("Command: " + command.toString());
+                                vdState.execute(command);
+                            }
+                            // clientQueue.remove();
+                            // clientQueue.poll();
+                            clientQueue.clear();
+                        }
+                        response = vdState.buildVD();
+                        System.out.println("Response: " + response);
+                    } else {
+                        // System.out.println("No hay mensajes para el cliente " + clientAddress);
                     }
-                }*/
-                vdState.eraseTextArea();
-                response = vdState.buildVD();
 
-                // response = "FEF000000000000000000000";
+                }
+
                 exchange.sendResponseHeaders(200, response.length());
                 OutputStream os = exchange.getResponseBody();
                 os.write(response.getBytes());
@@ -342,8 +366,6 @@ public class App {
         }
     }
 
-    
-
     public static String getMessage(String message) {
         StringBuilder textoConvertido = new StringBuilder();
         for (int i = 0; i < message.length(); i += 2) {
@@ -354,7 +376,6 @@ public class App {
         return textoConvertido.toString();
     }
 
-    
     public static boolean isCommandLine(String msg) {
         if (!msg.endsWith("&")) {
             return false;
@@ -383,11 +404,23 @@ public class App {
     }
 
     // Devuelve un array de comandos para luego ejecutarlos en VD
-    public static ArrayList<Command> processPacket(String protocol, String message) {
+    public static ArrayList<Command> processPacket(String protocolId, Protocol protocol, String message) {
+
         ArrayList<Command> commands = new ArrayList<>();
-        if (protocol.equals("F1")) {
-            
+        if (protocolId.equals("1")) {
+            String[] commandsP = message.split(protocol.commandDelimiter);
+            for (String command : commandsP) {
+                String[] parts = command.split(protocol.commandSeparator);
+                String component = App.protocols.get(protocolId).commandsMap.get(parts[0]);
+                System.out.println("Component: " + component);
+                System.out.println("Value: " + parts[1]);
+                String value = parts[1];
+                commands.add(new Command(component, "msg", value));
+            }
+        } else if (protocolId.equals("2")) {
+
         }
+
         return commands;
         // protocol|vd|message
     }
