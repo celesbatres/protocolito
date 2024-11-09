@@ -107,7 +107,8 @@ public class App {
     }
 
     public static void buildProtocols() {
-        // F1
+
+        // 1
         HashMap<String, String> commandsMap = new HashMap<>() {
             {
                 put("LCD", "lcd");
@@ -148,33 +149,45 @@ public class App {
         };
         App.protocols.put("1", new Protocol(commandsMap, commandsRegex, " ", ":"));
 
-        // Si los protocolos no tienen un delimitador de comandos entonces simplemente
-        // se crea el protocolo con un string vacío
-        // Al de barrios agregar un hashmap de commandLength
         commandsMap = new HashMap<>() {
             {
                 put("0", "lcd");
                 put("1", "switch0");
                 put("2", "switch1");
                 put("3", "fan");
-                put("4", "lrgb");
-                put("5", "lred");
-                put("6", "lgreen");
-                put("7", "heat");
-                put("8", "speed");
+                put("5", "lrgb");
+                put("7", "lred");
+                put("8", "lgreen");
+                put("9", "heat");
+                put("4", "speed");
                 put("A", "slider0");
                 put("B", "slider1");
                 put("C", "slider2");
-                put("D", "lrgb_color");
-                put("E", "pick_color");
+                put("6", "lrgb_color");
+                put("D", "pick_color");
                 put("F", "msg");
             }
         };
         commandsRegex = new HashMap<>() {
             {
-                put("CMD", "^[A-Za-z0-9_]+$");
+                put("0", "^[0-1]{1}$");
+                put("1", "^[0-1]{1}$");
+                put("2", "^[0-1]{1}$");
+                put("3", "^[0-1]{1}$");
+                put("4", "^[0-1]{1}$");
+                put("5", "^[0-1]{1}$");
+                put("6", "^[0-1]{1}$");
+                put("7", "^[0-1]{1}$");
+                put("8", "^(1[0-5]|[0-9])$");
+                put("A", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("B", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("C", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
+                put("D", "^([A-Fa-f0-9]{6})$");
+                put("E", "^([A-Fa-f0-9]{6})$");
+                put("F", "^[A-Za-z0-9_]+$");
             }
         };
+        App.protocols.put("2", new Protocol(commandsMap, commandsRegex, "", ""));
     }
 
     static class PostHandler implements HttpHandler {
@@ -214,8 +227,6 @@ public class App {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            ArrayList<String> receivedDriver = new ArrayList<>();
-
             // Agregar encabezados CORS
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -324,7 +335,7 @@ public class App {
                         System.out.println("Se ejecutan comandos internamente");
                     }
                 } else {
-                    if (clientMessages.containsKey(clientAddress)) {
+                    if (clientMessages.containsKey(clientAddress) && !clientMessages.get(clientAddress).isEmpty()) {
                         ConcurrentLinkedQueue<String> clientQueue = clientMessages.get(clientAddress);
                         System.out.println("Mensajes para cliente " + clientAddress + ":");
 
@@ -342,7 +353,7 @@ public class App {
                             }
                             // clientQueue.remove();
                             // clientQueue.poll();
-                            clientQueue.clear();
+                            clientMessages.get(clientAddress).poll();
                         }
                         response = vdState.buildVD();
                         System.out.println("Response: " + response);
@@ -419,6 +430,15 @@ public class App {
             }
         } else if (protocolId.equals("2")) {
 
+            while (message.length() > 0) {
+                int length = Integer.parseInt(message.substring(0, 1));
+                String command = message.substring(1, 2);
+                int commandLength = length - 2;
+                String value = message.substring(2, 2 + commandLength);
+                command = protocol.commandsMap.get(command);
+                commands.add(new Command(command, "msg", value));
+                message = message.substring(length);
+            }
         }
 
         return commands;
