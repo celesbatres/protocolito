@@ -16,6 +16,7 @@ public class App {
     public static HashMap<String, Protocol> protocols = new HashMap<>();
     private static final Map<String, ConcurrentLinkedQueue<String>> clientMessages = new ConcurrentHashMap<>();
     private static final List<String> connectedClients = Collections.synchronizedList(new ArrayList<>());
+    private static final ArrayList<String> msg = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
 
@@ -47,22 +48,24 @@ public class App {
                 // Parsear el mensaje: formato "ID-protocolo-datos"
                 String[] tokens = message.split("\\|");
                 String protocol = tokens[0];
-                System.out.println("Protocol: " + tokens[1]);
-                int virtualDevice = Integer.parseInt(tokens[1], 16); // ID del dispositivo virtual
+                System.out.println("Protocol: " + protocol);
+                int virtualDevice = Integer.parseInt(tokens[1]); // ID del dispositivo virtual
                 System.out.println("Virtual Device: " + virtualDevice);
                 String data = protocol + "|" + tokens[2];
-                synchronized (connectedClients) {
-                    System.out.println("Clientes conectados:");
-                    for (int i = 0; i < connectedClients.size(); i++) {
-                        System.out.println("VD " + i + ": Cliente " + connectedClients.get(i));
-                        if (i == virtualDevice) {
-                            clientMessages.computeIfAbsent(connectedClients.get(i), k -> new ConcurrentLinkedQueue<>())
-                                    .offer(data);
-                            System.out.println("Mensaje almacenado para VD " + virtualDevice +
-                                    " (Cliente: " + connectedClients.get(i) + ")");
-                        }
-                    }
-                }
+                msg.add(data);
+                // synchronized (connectedClients) {
+                // System.out.println("Clientes conectados:");
+                // for (int i = 0; i < connectedClients.size(); i++) {
+                // System.out.println("VD " + i + ": Cliente " + connectedClients.get(i));
+                // if (i == virtualDevice) {
+                // clientMessages.computeIfAbsent(connectedClients.get(i), k -> new
+                // ConcurrentLinkedQueue<>())
+                // .offer(data);
+                // System.out.println("Mensaje almacenado para VD " + virtualDevice +
+                // " (Cliente: " + connectedClients.get(i) + ")");
+                // }
+                // }
+                // }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -191,20 +194,9 @@ public class App {
     }
 
     static class PostHandler implements HttpHandler {
-        // LinkedList<String> vds = new LinkedList<>(); // Lista de componentes
-        // vds.add("FFF000000000000000000000737769746368305F6C6564313D31");
-        ArrayList<String> logVD = new ArrayList<>();
         private static final LinkedList<String> vdPackets = new LinkedList<>();
         private static final LinkedList<String> tpPackets = new LinkedList<>();
-        // private static final LinkedList<TenProtocol> tpPackets = new LinkedList<>();
         LinkedList<VirtualDevice> vds = new LinkedList<>();
-        // LinkedList<VirtualDevice> vds = new LinkedList<>();
-        String[] inputValidos = { "switch0", "switch1", "slider0", "slider1", "slider2", "pick_color" };
-
-        // VirtualDevice vdState = new VirtualDevice(response);
-        String[] commands = { "lcd", "switch0", "switch1", "fan", "lrgb", "lred", "lgreen", "heat", "speed", "slider0",
-                "slider1", "slider2", "lrgb_color", "pick_color", "msg" };
-        // TODO: Cabiar los value del hashmap a ReGex
         HashMap<String, String> commandsMap = new HashMap<>() {
             {
                 put("lcd", "^[0-1]{1}$");
@@ -259,6 +251,7 @@ public class App {
                     vdPackets.add("00F000000000000000000000");
                 }
 
+                System.out.println("Ultimo VD: " + vdPackets.getLast());
                 VirtualDevice vdState = new VirtualDevice(vdPackets.getLast());
 
                 // 32 caracteres ascii = 64 caracteres hexadecimales - 24+64 = 88 caracteres
@@ -274,7 +267,7 @@ public class App {
                 // System.out.println("Command Line: " + commandLine);
 
                 if (isCommandLine(commandLine) && !message.equals(vdState.buildVD())) {
-                    vdPackets.add(message);
+                    vdPackets.add(message); // <= ? solo está agregando el mensaje en la linea de comandos
 
                     String[] commands = commandLine.split(" ");
                     String action = commands[0];
@@ -333,34 +326,45 @@ public class App {
                         }
                     } else if (action.equals("cmd")) {
                         System.out.println("Se ejecutan comandos internamente");
+
                     }
                 } else {
-                    if (clientMessages.containsKey(clientAddress) && !clientMessages.get(clientAddress).isEmpty()) {
-                        ConcurrentLinkedQueue<String> clientQueue = clientMessages.get(clientAddress);
-                        System.out.println("Mensajes para cliente " + clientAddress + ":");
+                    if (!msg.isEmpty()) { // clientMessages.containsKey(clientAddress) &&
+                                          // !clientMessages.get(clientAddress).isEmpty()
+                        
+                        // ConcurrentLinkedQueue<String> clientQueue =
+                        // clientMessages.get(clientAddress);
+                        // System.out.println("Mensajes para cliente " + clientAddress + ":");
 
-                        for (String mensaje : clientQueue) {
-
-                            System.out.println("- " + mensaje);
-                            String protocol = mensaje.split("\\|")[0];
-                            String data = mensaje.split("\\|")[1];
-                            System.out.println("Data: " + data);
-                            ArrayList<Command> commands = processPacket(protocol, App.protocols.get(protocol), data);
-                            vdState.eraseTextArea();
-                            for (Command command : commands) {
-                                System.out.println("Command: " + command.toString());
-                                vdState.execute(command);
-                            }
-                            // clientQueue.remove();
-                            // clientQueue.poll();
-                            clientMessages.get(clientAddress).poll();
+                        String mensaje = msg.get(0);
+                        msg.remove(0);
+                        System.out.println("- " + mensaje);
+                        String protocol = mensaje.split("\\|")[0];
+                        String data = mensaje.split("\\|")[1];
+                        System.out.println("Data: " + data);
+                        ArrayList<Command> commands = processPacket(protocol, App.protocols.get(protocol), data);
+                        // vdState.eraseTextArea();
+                        for (Command command : commands) {
+                            System.out.println("Command: " + command.toString());
+                            vdState.execute(command);
                         }
+                        // clientQueue.remove();
+                        // clientQueue.poll();
+                        // clientMessages.get(clientAddress).poll();
+
                         response = vdState.buildVD();
                         System.out.println("Response: " + response);
+                        // vdPackets.add(response);
                     } else {
-                        // System.out.println("No hay mensajes para el cliente " + clientAddress);
+                        // Solo cambian componentes sin enviar o recibir
+                        vdState = new VirtualDevice(response);
                     }
+                }
 
+                if (vdState.buildVD() != vdPackets.getLast()) {
+                    vdPackets.add(vdState.buildVD());
+                    response = vdState.buildVD();
+                    System.out.println("Response: " + response);
                 }
 
                 exchange.sendResponseHeaders(200, response.length());

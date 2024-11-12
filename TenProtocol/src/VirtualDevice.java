@@ -93,11 +93,12 @@ public class VirtualDevice {
                     this.componentsMap.get("lrgb_color").setValue(value);
                     break;
                 case "pick_color":
+                    System.out.println("pick_color: " + value);
                     this.componentsMap.get("pick_color").setValue(value);
                     break;
                 case "msg":
-                    String msg = toHex(value);
-                    this.componentsMap.get("msg").setFunction(msg);
+                    String msg = stringToHex(value);
+                    this.componentsMap.get("msg").setValue(msg);
                     break;
                 default:
                     break;
@@ -134,6 +135,16 @@ public class VirtualDevice {
                     break;
             }
         }
+    }
+
+    public static String stringToHex(String input) {
+        StringBuilder hexString = new StringBuilder();
+        
+        for (char c : input.toCharArray()) {
+            hexString.append(Integer.toHexString((int) c));
+        }
+        
+        return hexString.toString();
     }
 
     public void eraseTextArea(){
@@ -203,7 +214,7 @@ public class VirtualDevice {
     }
 
     public String getPickColor() {
-        return this.componentsMap.get("pickColor").value;
+        return this.componentsMap.get("pick_color").value;
     }
 
     public String getMessage() {
