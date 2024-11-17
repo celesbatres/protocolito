@@ -10,6 +10,8 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class App {
     // public static String receivedPacket = "";
@@ -172,7 +174,7 @@ public class App {
             }
         };
 
-        //check commandsregex of this protocol
+        // check commandsregex of this protocol
         commandsRegex = new HashMap<>() {
             {
                 put("0", "^[0-1]{1}$");
@@ -193,6 +195,20 @@ public class App {
             }
         };
         App.protocols.put("2", new Protocol(commandsMap, commandsRegex, "", ""));
+
+        commandsMap = new HashMap<>() {
+            {
+                put("0", "heat");
+                put("1", "lred");
+                put("2", "lgreen");
+                put("3", "fan");
+                put("4", "lrgb");
+                put("5", "speed");
+                put("6", "lrgb_color");
+                put("7", "lcd");
+            }
+        };
+        App.protocols.put("8", new Protocol(commandsMap, commandsRegex, "", ""));
     }
 
     static class PostHandler implements HttpHandler {
@@ -271,7 +287,13 @@ public class App {
                 if (isCommandLine(commandLine) && !message.equals(vdState.buildVD())) {
                     vdPackets.add(message); // <= ? solo está agregando el mensaje en la linea de comandos
 
-                    String[] commands = commandLine.split(" ");
+                    ArrayList<String> tokens = new ArrayList<>();
+                    Pattern pattern = Pattern.compile("msg:’.*?’|\\S+");
+                    Matcher matcher = pattern.matcher(commandLine);
+                    while (matcher.find()) {
+                        tokens.add(matcher.group());
+                    }
+                    String[] commands = tokens.toArray(new String[0]);
                     String action = commands[0];
 
                     if (action.equals("msg")) {
@@ -322,7 +344,7 @@ public class App {
                             if (tpPackets.isEmpty() || !packet.equals(tpPackets.getLast())) {
                                 tpPackets.add(packet);
                                 System.out.println("TenProtocol: " + packet);
-                                //sendToDriver(packet);
+                                // sendToDriver(packet);
                             }
                         }
                     } else if (action.equals("cmd")) {
@@ -348,7 +370,7 @@ public class App {
                 } else {
                     if (!msg.isEmpty()) { // clientMessages.containsKey(clientAddress) &&
                                           // !clientMessages.get(clientAddress).isEmpty()
-                        
+
                         // ConcurrentLinkedQueue<String> clientQueue =
                         // clientMessages.get(clientAddress);
                         // System.out.println("Mensajes para cliente " + clientAddress + ":");
@@ -435,15 +457,15 @@ public class App {
         return true;
     }
 
-    public static boolean isIN(String component){
-        String[] inComponents = {"switch0", "switch1", "slider0", "slider1", "slider2"};
+    public static boolean isIN(String component) {
+        String[] inComponents = { "switch0", "switch1", "slider0", "slider1", "slider2" };
         return Arrays.asList(inComponents).contains(component);
     }
 
-    public static boolean isFunction(String function){
-        String[] functions = {"lcd", "fan", "lrgb", "lred", "lgreen", "heat"};
+    public static boolean isFunction(String function) {
+        String[] functions = { "lcd", "fan", "lrgb", "lred", "lgreen", "heat" };
         return Arrays.asList(functions)
-        .contains(function);
+                .contains(function);
     }
 
     // Devuelve un array de comandos para luego ejecutarlos en VD
@@ -471,8 +493,10 @@ public class App {
                 commands.add(new Command(command, "msg", value));
                 message = message.substring(length);
             }
-        } else if (protocolId.equals("3")){
-
+        } else if (protocolId.equals("8")) {
+            String component = App.protocols.get(protocolId).commandsMap.get(message.substring(0, 1));
+            String value = message.substring(1);
+            commands.add(new Command(component, "msg", value));
         }
 
         return commands;
