@@ -138,6 +138,16 @@ public class VirtualDevice {
     }
 
     public static String stringToHex(String input) {
+        int targetLength = 16;
+        if (input.length() == targetLength) {
+        } else if (input.length() < targetLength) {
+            // Rellenar con espacios en blanco a la derecha
+            input = String.format("%-" + targetLength + "s", input);
+        } else {
+            // Si es mayor, truncar al tamaño requerido
+            input =  input.substring(0, targetLength);
+        }
+        
         StringBuilder hexString = new StringBuilder();
         
         for (char c : input.toCharArray()) {

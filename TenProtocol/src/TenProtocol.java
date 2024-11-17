@@ -70,6 +70,40 @@ public class TenProtocol {
             String component = token.split(":")[0];
             String value = token.split(":")[1];
             //Traducción de Protocolo
+            switch (component) {
+                case "lcd":
+                break;
+                case "switch0":
+                break;
+                case "switch1":
+                break;
+                case "fan":
+                break;
+                case "lrgb":
+                break;
+                case "lred":
+                break;
+                case "lgreen":
+                break;
+                case "heat":
+                break;
+                case "speed":
+                break;
+                case "slider0":
+                break;
+                case "slider1":
+                break;
+                case "slider2":
+                break;
+                case "lrgb_color":
+                break;
+                case "pick_color":
+                break;
+                case "msg":
+                break;
+                default:
+                //Comando desconocido
+                }                
         }
     }
 

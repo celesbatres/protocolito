@@ -168,9 +168,11 @@ public class App {
                 put("C", "slider2");
                 put("6", "lrgb_color");
                 put("D", "pick_color");
-                put("F", "msg");
+                put("EE", "msg");
             }
         };
+
+        //check commandsregex of this protocol
         commandsRegex = new HashMap<>() {
             {
                 put("0", "^[0-1]{1}$");
@@ -273,7 +275,6 @@ public class App {
                     String action = commands[0];
 
                     if (action.equals("msg")) {
-                        System.out.println("Es mensaje");
                         String direction = commands[1].split(":")[0];
                         String vd = commands[1].split(":")[1];
                         String header = direction + "|" + vd;
@@ -310,7 +311,7 @@ public class App {
                             if (!newComponent.getValue().equals(currentComponent.getValue())) {
                                 boolean isIN = currentComponent.getRol().equals("IN");
                                 if (isIN) {
-                                    tp.commands.add(new Command(key, "msg", newComponent.getValue()));
+                                    tp.commands.add(new Command(key, action, newComponent.getValue()));
                                 }
                             }
                         }
@@ -321,11 +322,27 @@ public class App {
                             if (tpPackets.isEmpty() || !packet.equals(tpPackets.getLast())) {
                                 tpPackets.add(packet);
                                 System.out.println("TenProtocol: " + packet);
-                                // sendToDriver(packet);
+                                //sendToDriver(packet);
                             }
                         }
                     } else if (action.equals("cmd")) {
                         System.out.println("Se ejecutan comandos internamente");
+                        // Recorrer el msg
+                        for (int i = 1; i < commands.length - 1; i++) {
+                            String command = commands[i];
+                            String[] parts = command.split(":");
+                            String component = parts[0];
+                            String function = parts[1];
+                            // System.out.println("Component: " + component + " Value: " + value);
+                            if (commandsMap.containsKey(component)) {// Es un comando válido
+                                // Hacer comparaciones
+                                if (isIN(component) && isFunction(function)) {// Tiene un valor válido para asignarle
+                                    System.out.println("Cumple y ejecuta");
+                                    Command comm = new Command(component, action, function);
+                                    vdState.execute(comm);
+                                }
+                            }
+                        }
 
                     }
                 } else {
@@ -418,6 +435,17 @@ public class App {
         return true;
     }
 
+    public static boolean isIN(String component){
+        String[] inComponents = {"switch0", "switch1", "slider0", "slider1", "slider2"};
+        return Arrays.asList(inComponents).contains(component);
+    }
+
+    public static boolean isFunction(String function){
+        String[] functions = {"lcd", "fan", "lrgb", "lred", "lgreen", "heat"};
+        return Arrays.asList(functions)
+        .contains(function);
+    }
+
     // Devuelve un array de comandos para luego ejecutarlos en VD
     public static ArrayList<Command> processPacket(String protocolId, Protocol protocol, String message) {
 
@@ -443,6 +471,8 @@ public class App {
                 commands.add(new Command(command, "msg", value));
                 message = message.substring(length);
             }
+        } else if (protocolId.equals("3")){
+
         }
 
         return commands;

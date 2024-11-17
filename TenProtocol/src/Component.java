@@ -2,6 +2,11 @@ public class Component {
     String value;
     String rol; // IN, OUT
     String function; 
+    
+    public Component(String value){
+        this.value = value;
+        this.rol = "OUT";
+    } 
 
     public String getValue(){
         return this.value;
@@ -25,10 +30,5 @@ public class Component {
 
     public void setFunction(String function){
         this.function = function;
-    }
-
-    public Component(String value){
-        this.value = value;
-        this.rol = "OUT";
-    }    
+    }   
 }
