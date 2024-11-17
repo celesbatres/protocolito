@@ -288,12 +288,15 @@ public class App {
                     vdPackets.add(message); // <= ? solo está agregando el mensaje en la linea de comandos
 
                     ArrayList<String> tokens = new ArrayList<>();
-                    Pattern pattern = Pattern.compile("msg:’.*?’|\\S+");
+                    Pattern pattern = Pattern.compile("msg:'.*?'|\\S+");
                     Matcher matcher = pattern.matcher(commandLine);
                     while (matcher.find()) {
                         tokens.add(matcher.group());
                     }
                     String[] commands = tokens.toArray(new String[0]);
+                    for (int i = 0; i < commands.length; i++) {
+                        System.out.println("Comando: "+commands[i]);
+                    }
                     String action = commands[0];
 
                     if (action.equals("msg")) {
@@ -435,24 +438,38 @@ public class App {
             return false;
         }
 
-        String[] parts = msg.substring(0, msg.length() - 2).split(" ");
+        // String input = msg; // "241:1 lred:1 lcd:1 msg:’Hola Grupo F1’";
+        // ArrayList<String> tokens = new ArrayList<>();
 
-        // Debe tener al menos 2 elementos (cmd/msg y un componente:valor)
-        if (parts.length < 2) {
-            return false;
-        }
+        // Pattern pattern = Pattern.compile("msg:'.*?'|\\S+");
+        // Matcher matcher = pattern.matcher(input);
 
-        if (!parts[0].equals("cmd") && !parts[0].equals("msg")) {
-            return false;
-        }
+        // while (matcher.find()) {
+        //     tokens.add(matcher.group());
+        // }
 
-        // Verificar que todos los elementos después del primero tengan formato
-        // componente:valor
-        for (int i = 2; i < parts.length; i++) {
-            if (!parts[i].matches("[a-zA-Z0-9_]+:[a-zA-Z0-9_]+")) {
-                return false;
-            }
-        }
+        // String[] parts = tokens.toArray(new String[0]);
+
+        // for (String part : parts) {
+        //     System.out.println(part);
+        // }
+        
+        // // Debe tener al menos 2 elementos (cmd/msg y un componente:valor)
+        // if (parts.length < 2) {
+        //     return false;
+        // }
+
+        // if (!parts[0].equals("cmd") && !parts[0].equals("msg")) {
+        //     return false;
+        // }
+
+        // // Verificar que todos los elementos después del primero tengan formato
+        // // componente:valor
+        // for (int i = 2; i < parts.length; i++) {
+        //     if (!parts[i].matches("[a-zA-Z0-9_]+:[a-zA-Z0-9_]+")) {
+        //         return false;
+        //     }
+        // }
 
         return true;
     }
