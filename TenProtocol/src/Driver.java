@@ -137,7 +137,6 @@ public class Driver {
             while (true) {
                 //mensaje completo que se recibe del grupo 
                 String mensaje_recibido = recibirMensajeUART();
-                mensaje_recibido = "010564010604LRED:1";
                 //substring del grupo para hacer un if y luego mandar todos los datos a metodo, que se forme el header y lo recibido 
                 String no_grupo = mensaje_recibido.substring(0,2);
                 String no_vd = "";
