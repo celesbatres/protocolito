@@ -59,16 +59,13 @@ int main (void) {
     //struct receive_elem *elem = NULL;
     char c = uart_getc(UART_ID);
       //uart_putc(UART_ID, c);
-        if (c == '\n' || c == '\r')
-        {
-            data[buffer_index] = '\0';
-            buffer_index = 0;
-            create_frame(data);
-        }
-        else
-        {
-            data[buffer_index++] = c;
-        }
+      if ((c == '\n' || c == '\r') && c != 0x10) {
+        data[buffer_index] = '\0';
+        buffer_index = 0;
+        create_frame(data);
+      } else {
+        data[buffer_index++] = c;
+      }
   }
 
   
@@ -76,7 +73,7 @@ int main (void) {
 
 void create_frame(char data[]){
     struct frame *f = malloc(sizeof *f);
-    f->to = 0x02;
+    f->to = 0x64;
     f->from = 0x64;
     f->length = strlen(data) + 1;
     f->header_checksum = ((f->to + f->from + f->length) ^ 0xFF) + 0x1;    // checksum is ALWAYS calculated the same
