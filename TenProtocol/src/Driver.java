@@ -137,7 +137,7 @@ public class Driver {
             while (true) {
                 //mensaje completo que se recibe del grupo 
                 String mensaje_recibido = recibirMensajeUART();
-                
+                mensaje_recibido = "010564010604LRED:1";
                 //substring del grupo para hacer un if y luego mandar todos los datos a metodo, que se forme el header y lo recibido 
                 String no_grupo = mensaje_recibido.substring(0,2);
                 String no_vd = "";
@@ -147,40 +147,42 @@ public class Driver {
                 System.out.println("grupo num " + no_grupo);
                 //cambiar para ver del 01 o 02 etc
                 if(no_grupo.equals("01")){
-                    
-                System.out.println("ddd " + mensaje_recibido);
                     no_vd = mensaje_recibido.substring(6, 8);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
-                    mensaje_e = mensaje_recibido.substring(12, mensaje_recibido.length() - 6);
+                    mensaje_e = mensaje_recibido.substring(12, mensaje_recibido.length());
+                    System.out.println(" mensaje_recibido " + mensaje_recibido);
+                    System.out.println(" mensaje_e " + mensaje_e);
                     header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
+                    System.out.println(" header_dapp " + header_dapp);
+                //grupo 2
                 }else if(no_grupo.equals("02")){
-                    
-                    //System.out.println("mensaje completo " + mensaje_recibido );
                     no_vd = mensaje_recibido.substring(8, 10);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
-                    
-                    //System.out.println(" no_vd " + vd_temporal );
-
                     mensaje_e = mensaje_recibido.substring(16, mensaje_recibido.length());
-                    //System.out.println(" mensaje vd " + mensaje_e );
-
                     header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-                    //header_dapp = "2|0|321";
-                    //header_dapp = "1|0|LRED:1";
-                    //System.out.println(" ha " + header_dapp );
-                }else if(no_grupo == "08"){
+                //grupo 8
+                }else if(no_grupo.equals("08")){
                     no_vd = mensaje_recibido.substring(4, 6);
-                    mensaje_e = mensaje_recibido.substring(12, mensaje_recibido.length());
+                    vd_temporal = Integer.parseInt(no_vd) - 1;
+                    mensaje_e = mensaje_recibido.substring(10, mensaje_recibido.length());
                     header_dapp = HeaderVirtualD(no_grupo, no_vd, mensaje_e);
-                }else if(no_grupo == "11"){
-                    no_vd = mensaje_recibido.substring(8, 10);
-                    mensaje_e = mensaje_recibido.substring(12, mensaje_recibido.length());
+                //grupo 11
+                }else if(no_grupo.equals("11")){
+                    no_vd = mensaje_recibido.substring(10, 12);
+                    vd_temporal = Integer.parseInt(no_vd) - 1;
+                    mensaje_e = mensaje_recibido.substring(16, mensaje_recibido.length());
+                    header_dapp = HeaderVirtualD(no_grupo, no_vd, mensaje_e);
+                }
+                //grupo 12
+                else if(no_grupo.equals("12")){
+                    /*no_vd = mensaje_recibido.substring(10, 12);
+                    vd_temporal = Integer.parseInt(no_vd) - 1;*/
+                    mensaje_e = mensaje_recibido.substring(14, mensaje_recibido.length());
                     header_dapp = HeaderVirtualD(no_grupo, no_vd, mensaje_e);
                 }
 
                 //en un string que se va a mandar. 
                 if (header_dapp != null && !header_dapp.isEmpty()) {
-                    //mensaje?recibido = obtenido del metoedo enviarCeles 
                     enviarUDP(udpSocket, header_dapp, appAddress);
                     System.out.println("Mensaje enviado de driver a app " + header_dapp);
                 }
@@ -202,17 +204,14 @@ public class Driver {
         String datos_recibidos = "";
         byte[] BufferUART = new byte[1024];
         int bytesRead = 0;
-        
-        System.out.println("siii ");
         while (true) {
             bytesRead = puertoUtilizar.readBytes(BufferUART, BufferUART.length);
             if (bytesRead > 0) {
                 //datos_recibidos = new String(BufferUART, 0, bytesRead);
-                System.out.println("FISICA -> Driver: " + datos_recibidos);     
+                //System.out.println("FISICA -> Driver: " + datos_recibidos);     
                 break; // Sale del bucle después de recibir la respuesta
             }
         }
-        //System.out.print("h " + bytesRead);
 
         if(BufferUART[0] == 1){
             datos_recibidos = Grupo1(BufferUART,bytesRead);
@@ -222,6 +221,8 @@ public class Driver {
             datos_recibidos = Grupo8(BufferUART,bytesRead);
         }else if(BufferUART[0] == 11){
             datos_recibidos = Grupo11(BufferUART,bytesRead);
+        }else if(BufferUART[0] == 12){
+            datos_recibidos = Grupo12(BufferUART,bytesRead);
         }
 
         return datos_recibidos;
@@ -286,6 +287,20 @@ public class Driver {
         return final_enviado;
     }
 
+    private static String Grupo12(byte[] mensajeRecibido, int cantBytes){
+        StringBuilder h2 = new StringBuilder();
+        for(int i = 0; i < 7; i++){
+            h2.append(String.format("%02X", mensajeRecibido[i]));
+        }
+
+        String header_h2 = h2.toString();
+
+        String mensaje = new String(mensajeRecibido, 8, cantBytes).substring(0, mensajeRecibido[5]);
+        String final_enviado = header_h2 + mensaje;
+
+        return final_enviado;
+    }
+
     private static void enviarUDP(DatagramSocket udpSocket, String message, InetAddress address) {
         try {
             byte[] udpBuffer = message.getBytes();
@@ -294,8 +309,5 @@ public class Driver {
         } catch (IOException e) {
             System.err.println("Error al enviar mensaje UDP: " + e.getMessage());
         }
-    }
-
-
-    
+    } 
 }
