@@ -150,10 +150,7 @@ public class Driver {
                     no_vd = mensaje_recibido.substring(6, 8);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(12, mensaje_recibido.length());
-                    System.out.println(" mensaje_recibido " + mensaje_recibido);
-                    System.out.println(" mensaje_e " + mensaje_e);
                     header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-                    System.out.println(" header_dapp " + header_dapp);
                 //grupo 2
                 }else if(no_grupo.equals("02")){
                     no_vd = mensaje_recibido.substring(8, 10);
