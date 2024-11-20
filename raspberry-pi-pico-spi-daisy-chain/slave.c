@@ -50,19 +50,7 @@ void spiReceiveISR () {
       // uart_puts(UART_ID, f->data);
       uart_write_blocking(UART_ID, f->data, f->length);
     } else if(f->from == 0x64){
-    
-<<<<<<< HEAD
-      if(f->to == 0x64) {
-        uart_puts(UART_ID, f->data);
-       // uart_write_blocking(UART_ID, f->data, f->length);
-      } else if(f->from == 0x64){
-        
-      } else {
-        master_propagate(f);
-      }
-     
-    
-=======
+
     }else {
       master_propagate(f);
     }
@@ -70,7 +58,6 @@ void spiReceiveISR () {
     // checksum ERROR
   }
           
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
   free(f->data);
   free(f);
 }
