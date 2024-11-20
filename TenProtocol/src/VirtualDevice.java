@@ -51,92 +51,13 @@ public class VirtualDevice {
         String value = command.getValue();
 
         if(action.equals("msg")){
-            System.out.println(component);
-            if(component.equals("speed")){
-                System.out.println("Speed: " + value);
-                System.out.println("Speed To Hex: ");
-                this.componentsMap.get("speed").setValue(decimalToHex(value));
-                System.out.println(this.componentsMap.get("speed").value);
+            if(component.equals("msg")){
+                this.componentsMap.get("msg").setValue(stringToHex(value));
                 return;
             }
-            // Cambiar el valor del componente
-            switch(component){
-                case "lcd":
-                    this.componentsMap.get("lcd").setValue(value);
-                    break;
-                case "switch0":
-                    this.componentsMap.get("switch0").setValue(value);
-                    break;
-                case "switch1":
-                    this.componentsMap.get("switch1").setValue(value);
-                    break;
-                case "fan":
-                    this.componentsMap.get("fan").setValue(value);
-                    break;
-                case "lrgb":
-                    this.componentsMap.get("lrgb").setValue(value);
-                    break;
-                case "lred":
-                    System.out.println("Lred: " + value);
-                    this.componentsMap.get("lred").setValue(value);
-                    break;
-                case "lgreen":
-                    this.componentsMap.get("lgreen").setValue(value);
-                    break;
-                case "heat":
-                    this.componentsMap.get("heat").setValue(value);
-                    break;
-                case "speed":
-                    System.out.println("Speed+: " + toHex(value));
-                    this.componentsMap.get("speed").setValue(toHex(value));
-                    break;
-                case "slider0":
-                    this.componentsMap.get("slider0").setValue(value);
-                    break;
-                case "slider1":
-                    this.componentsMap.get("slider1").setValue(value);
-                    break;
-                case "slider2":
-                    this.componentsMap.get("slider2").setValue(value);
-                    break;
-                case "lrgb_color":
-                    this.componentsMap.get("lrgb_color").setValue(value);
-                    break;
-                case "pick_color":
-                    System.out.println("pick_color: " + value);
-                    this.componentsMap.get("pick_color").setValue(value);
-                    break;
-                case "msg":
-                    String msg = stringToHex(value);
-                    this.componentsMap.get("msg").setValue(msg);
-                    break;
-                default:
-                    break;
-            }
+            this.componentsMap.get(component).setValue(value);
         }else if(action.equals("cmd")){
-            // Cambiar la función del componente
-            switch(component){
-                case "switch0":
-                    this.componentsMap.get("switch0").setFunction(value);
-                    break;
-                case "switch1":
-                    this.componentsMap.get("switch1").setFunction(value);
-                    break;
-                case "slider0":
-                    this.componentsMap.get("slider0").setFunction(value);
-                    break;
-                case "slider1":
-                    this.componentsMap.get("slider1").setFunction(value);
-                    break;
-                case "slider2":
-                    this.componentsMap.get("slider2").setFunction(value);
-                    break;
-                case "pick_color":
-                    this.componentsMap.get("pick_color").setFunction(value);
-                    break;
-                default:
-                    break;
-            }
+            this.componentsMap.get(component).setFunction(value);
         }
     }
 

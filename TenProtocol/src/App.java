@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.json.JSONObject;
+import org.json.JSONException;
 
 public class App {
     // public static String receivedPacket = "";
@@ -143,7 +145,7 @@ public class App {
                 put("LRED", "^[0-1]{1}$");
                 put("LGRE", "^[0-1]{1}$");
                 put("HEAT", "^[0-1]{1}$");
-                put("SPD", "^(1[0-5]|[0-9])$");
+                put("SPD", "^[0-9A-Fa-f]$");
                 put("SLIDER0", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
                 put("SLIDER1", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
                 put("SLIDER2", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
@@ -210,6 +212,21 @@ public class App {
             }
         };
         App.protocols.put("8", new Protocol(commandsMap, commandsRegex, "", ""));
+
+        commandsMap = new HashMap<>() {
+            {
+                put("HET", "heat");
+                put("LDR", "lred");
+                put("LDG", "lgreen");
+                put("FAN", "fan");
+                put("RLD", "lrgb");
+                put("SPD", "speed");
+                put("LRGB", "lrgb_color");
+                put("LCD", "lcd");
+                put("MSG", "msg");
+            }
+        };
+        App.protocols.put("11", new Protocol(commandsMap, commandsRegex, "", ""));        
     }
 
     static class PostHandler implements HttpHandler {
@@ -318,10 +335,10 @@ public class App {
                                 // Hacer comparaciones
                                 System.out.println("Command: " + commandsMap.get(component));
                                 System.out.println();
-                               // Tiene un valor válido para asignarle
-                                    System.out.println("Cumple");
-                                    tp.commands.add(new Command(component, "msg", value));
-                                
+                                // Tiene un valor válido para asignarle
+                                System.out.println("Cumple");
+                                tp.commands.add(new Command(component, "msg", value));
+
                             }
                         }
 
@@ -395,7 +412,6 @@ public class App {
                             System.out.println("Hi");
                         }
 
-                        
                         // vdPackets.add(response);
                     } else {
                         // Solo cambian componentes sin enviar o recibir
@@ -490,14 +506,18 @@ public class App {
         ArrayList<Command> commands = new ArrayList<>();
         if (protocolId.equals("1")) {
             String[] commandsP = separarTexto(message);
-            
+
             for (String command : commandsP) {
                 String[] parts = command.split(protocol.commandSeparator);
                 String component = App.protocols.get(protocolId).commandsMap.get(parts[0]);
                 System.out.println("Component: " + component);
                 System.out.println("Value: " + parts[1]);
                 String value = parts[1];
-                if( (App.protocols.get(protocolId).commandsMap.containsKey(parts[0]) && value.matches(App.protocols.get(protocolId).commandsRegex.get(parts[0])))){
+                if (component.equals("speed")) {
+                    value = decimalToHex(value);
+                }
+                if ((App.protocols.get(protocolId).commandsMap.containsKey(parts[0])
+                        && value.matches(App.protocols.get(protocolId).commandsRegex.get(parts[0])))) {
                     System.out.println("Elemento");
                     commands.add(new Command(component, "msg", value));
                 }
@@ -508,17 +528,17 @@ public class App {
             String command = "";
             String value = "";
             while (message.length() > 0) {
-                if(message.startsWith("EE")){
+                if (message.startsWith("EE")) {
                     length = message.length();
                     command = "EE";
                     value = getMessage(message.substring(2));
-                }else{
+                } else {
                     length = Integer.parseInt(message.substring(0, 1));
                     command = message.substring(1, 2);
                     int commandLength = length - 2;
                     value = message.substring(2, 2 + commandLength);
                 }
-                
+
                 command = protocol.commandsMap.get(command);
                 commands.add(new Command(command, "msg", value));
                 message = message.substring(length);
@@ -527,6 +547,37 @@ public class App {
             String component = App.protocols.get(protocolId).commandsMap.get(message.substring(0, 1));
             String value = message.substring(1);
             commands.add(new Command(component, "msg", value));
+        } else if (protocolId.equals("11") || protocolId.equals("B")) {
+            try {
+                JSONObject response = new JSONObject(message);
+
+                int group = response.getInt("group");
+                String element = response.getString("element");
+                int type = response.getInt("type");
+                String value = response.getString("value"); 
+                String state = response.getString("state");
+
+                if (type == 1) {
+                    switch (element) {
+                        case "FAN":
+                            element = "SPD";
+                            value = decimalToHex(value);
+                            break;
+                        case "RLD":
+                            element = "LRGB";
+                            break;
+                        default:
+                            break;
+                    }
+                }else{
+                    value = state;
+                }
+
+                String component = App.protocols.get(protocolId).commandsMap.get(element);
+                commands.add(new Command(component, "msg", value));
+            } catch (JSONException e) {
+                System.err.println("Error parsing Protocol 11 message: " + e.getMessage());
+            }
         }
 
         return commands;
@@ -538,7 +589,7 @@ public class App {
 
         // Patrón: separa por espacios, pero captura todo lo que sigue después de "MSG:"
         String regex = "(MSG:.*)|([^\\s]+)";
-        
+
         java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
         java.util.regex.Matcher matcher = pattern.matcher(input);
 
@@ -548,5 +599,17 @@ public class App {
 
         // Convertir la lista a un array y devolverlo
         return partes.toArray(new String[0]);
+    }
+
+    public static String decimalToHex(String decimalString) {
+        try {
+            // Convertir el string decimal a un entero
+            int decimal = Integer.parseInt(decimalString);
+            // Convertir el entero a hexadecimal
+            return Integer.toHexString(decimal).toUpperCase();
+        } catch (NumberFormatException e) {
+            // Manejo de errores en caso de formato inválido
+            throw new IllegalArgumentException("El input no es un número decimal válido: " + decimalString);
+        }
     }
 }

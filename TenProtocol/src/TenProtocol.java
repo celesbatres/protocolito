@@ -27,11 +27,7 @@ public class TenProtocol {
             this.data +=  command.component + ":" + command.value + " ";
            // System.out.println("hh " +  command.value + " aa " + command.action + " cc " + command.component);
         }
-<<<<<<< HEAD
         this.data = this.data.trim();
-=======
-        this.data = this.data.substring(0, this.data.length()-1);
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
         return this.header + "|" + this.data;
     }
 
