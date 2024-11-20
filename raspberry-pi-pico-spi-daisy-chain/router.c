@@ -73,7 +73,7 @@ int main (void) {
 
 void create_frame(char data[]){
     struct frame *f = malloc(sizeof *f);
-    f->to = 0x64;
+    f->to = data[1];
     f->from = 0x64;
     f->length = strlen(data) + 1;
     f->header_checksum = ((f->to + f->from + f->length) ^ 0xFF) + 0x1;    // checksum is ALWAYS calculated the same
