@@ -146,21 +146,14 @@ public class Driver {
                 String no_vd = "";
                 int vd_temporal = 0;
                 String mensaje_e = "";
-<<<<<<< HEAD
                 String mensaje_temp = "";
                 
                 String header_dapp = "";
                 System.out.println("grupo num " + no_grupo);
-=======
-                String header_dapp = "";
-                System.out.println("grupo num " + no_grupo);
-                //cambiar para ver del 01 o 02 etc
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
                 if(no_grupo.equals("01")){
                     no_vd = mensaje_recibido.substring(6, 8);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(12, mensaje_recibido.length());
-<<<<<<< HEAD
                     if(mensaje_recibido.contains("msg")){
                         mensaje_temp = "'" + mensaje_e + "'";
                         header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
@@ -169,15 +162,11 @@ public class Driver {
                     }
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-=======
-                    header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
                 //grupo 2
                 }else if(no_grupo.equals("02")){
                     no_vd = mensaje_recibido.substring(8, 10);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(16, mensaje_recibido.length());
-<<<<<<< HEAD
                     if(mensaje_recibido.contains("msg")){
                         mensaje_temp = "'" + mensaje_e + "'";
                         header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
@@ -186,15 +175,11 @@ public class Driver {
                     }
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-=======
-                    header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
                 //grupo 8
                 }else if(no_grupo.equals("08")){
                     no_vd = mensaje_recibido.substring(4, 6);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(10, mensaje_recibido.length());
-<<<<<<< HEAD
                     if(mensaje_recibido.contains("msg")){
                         mensaje_temp = "'" + mensaje_e + "'";
                         header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
@@ -203,15 +188,11 @@ public class Driver {
                     }
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-=======
-                    header_dapp = HeaderVirtualD(no_grupo, no_vd, mensaje_e);
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
                 //grupo 11
                 }else if(no_grupo.equals("11")){
                     no_vd = mensaje_recibido.substring(10, 12);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(16, mensaje_recibido.length());
-<<<<<<< HEAD
                     if(mensaje_recibido.contains("msg")){
                         mensaje_temp = "'" + mensaje_e + "'";
                         header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
@@ -220,16 +201,12 @@ public class Driver {
                     }
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-=======
-                    header_dapp = HeaderVirtualD(no_grupo, no_vd, mensaje_e);
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
                 }
                 //grupo 12
                 else if(no_grupo.equals("12")){
                     /*no_vd = mensaje_recibido.substring(10, 12);
                     vd_temporal = Integer.parseInt(no_vd) - 1;*/
                     mensaje_e = mensaje_recibido.substring(14, mensaje_recibido.length());
-<<<<<<< HEAD
                     if(mensaje_recibido.contains("msg")){
                         mensaje_temp = "'" + mensaje_e + "'";
                         header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
@@ -238,9 +215,6 @@ public class Driver {
                     }
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-=======
-                    header_dapp = HeaderVirtualD(no_grupo, no_vd, mensaje_e);
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
                 }
 
                 //en un string que se va a mandar. 
@@ -299,11 +273,7 @@ public class Driver {
 
         String header_h2 = h2.toString();
         //mensajeRecibido[5] es la posición del length
-<<<<<<< HEAD
         String mensaje = new String(mensajeRecibido, 6, cantBytes).substring(0, (mensajeRecibido[4] - 6));
-=======
-        String mensaje = new String(mensajeRecibido, 6, cantBytes).substring(0, mensajeRecibido[4]);
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
         String final_enviado = header_h2 + mensaje;
 
         return final_enviado;
@@ -376,8 +346,4 @@ public class Driver {
             System.err.println("Error al enviar mensaje UDP: " + e.getMessage());
         }
     } 
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
