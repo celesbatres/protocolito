@@ -46,10 +46,12 @@ void spiReceiveISR () {
 
   uint8_t valid = header[0] + header[1] + header[2] + header[3];
   if (valid == 0) {
-    if(f->to == 0x05) {
+    if(f->to == 0x64) {
       // uart_puts(UART_ID, f->data);
       uart_write_blocking(UART_ID, f->data, f->length);
-    } else {
+    } else if(f->from == 0x64){
+    
+    }else {
       master_propagate(f);
     }
   } else {
