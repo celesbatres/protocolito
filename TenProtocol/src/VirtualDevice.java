@@ -54,7 +54,10 @@ public class VirtualDevice {
             System.out.println(component);
             if(component.equals("speed")){
                 System.out.println("Speed: " + value);
-                setSpeed(value);
+                System.out.println("Speed To Hex: ");
+                this.componentsMap.get("speed").setValue(decimalToHex(value));
+                System.out.println(this.componentsMap.get("speed").value);
+                return;
             }
             // Cambiar el valor del componente
             switch(component){
@@ -84,7 +87,7 @@ public class VirtualDevice {
                     this.componentsMap.get("heat").setValue(value);
                     break;
                 case "speed":
-                    System.out.println("Speed: " + toHex(value));
+                    System.out.println("Speed+: " + toHex(value));
                     this.componentsMap.get("speed").setValue(toHex(value));
                     break;
                 case "slider0":
@@ -113,11 +116,11 @@ public class VirtualDevice {
         }else if(action.equals("cmd")){
             // Cambiar la función del componente
             switch(component){
-                case "control":
-                    this.componentsMap.get("control").setFunction(value);
+                case "switch0":
+                    this.componentsMap.get("switch0").setFunction(value);
                     break;
-                case "speed":
-                    this.componentsMap.get("speed").setFunction(value);
+                case "switch1":
+                    this.componentsMap.get("switch1").setFunction(value);
                     break;
                 case "slider0":
                     this.componentsMap.get("slider0").setFunction(value);
@@ -127,16 +130,9 @@ public class VirtualDevice {
                     break;
                 case "slider2":
                     this.componentsMap.get("slider2").setFunction(value);
-                    break;  
-                case "lrgb_color":
-                    this.componentsMap.get("lrgb_color").setFunction(value);
                     break;
                 case "pick_color":
                     this.componentsMap.get("pick_color").setFunction(value);
-                    break;
-                case "msg":
-                    String msg = toHex(value);
-                    this.componentsMap.get("msg").setFunction(msg);
                     break;
                 default:
                     break;
@@ -145,7 +141,7 @@ public class VirtualDevice {
     }
 
     public static String stringToHex(String input) {
-        int targetLength = 16;
+        int targetLength = 32;
         if (input.length() == targetLength) {
         } else if (input.length() < targetLength) {
             // Rellenar con espacios en blanco a la derecha
@@ -176,7 +172,7 @@ public class VirtualDevice {
 
     // Devuelve el VD completo en dependencia de los atributos
     public String buildVD(){//Sin msg
-        // System.out.println("Speed22: " + this.componentsMap.get("speed").value);
+        System.out.println("Speed22: " + this.componentsMap.get("speed").value);
         String vd = buildControl() + this.componentsMap.get("speed").value + this.componentsMap.get("space").value + this.componentsMap.get("slider0").value + this.componentsMap.get("slider1").value + this.componentsMap.get("slider2").value + this.componentsMap.get("space").value + this.componentsMap.get("lrgb_color").value + this.componentsMap.get("space").value + this.componentsMap.get("pick_color").value + this.componentsMap.get("msg").value;
         return vd;
     }
@@ -293,5 +289,17 @@ public class VirtualDevice {
     public int hashCode() {
         return Objects.hash(getControl(), getSpeed(), getSlider0(), getSlider1(), 
                           getSlider2(), getLedRgb(), getPickColor(), getMessage());
+    }
+
+    public static String decimalToHex(String decimalString) {
+        try {
+            // Convertir el string decimal a un entero
+            int decimal = Integer.parseInt(decimalString);
+            // Convertir el entero a hexadecimal
+            return Integer.toHexString(decimal).toUpperCase();
+        } catch (NumberFormatException e) {
+            // Manejo de errores en caso de formato inválido
+            throw new IllegalArgumentException("El input no es un número decimal válido: " + decimalString);
+        }
     }
 }//se puede recorrer por hashmap o por lista de componentes

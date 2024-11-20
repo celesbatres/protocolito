@@ -141,7 +141,7 @@ public class App {
                 put("FAN", "^[0-1]{1}$");
                 put("LRGB", "^[0-1]{1}$");
                 put("LRED", "^[0-1]{1}$");
-                put("LGREEN", "^[0-1]{1}$");
+                put("LGRE", "^[0-1]{1}$");
                 put("HEAT", "^[0-1]{1}$");
                 put("SPD", "^(1[0-5]|[0-9])$");
                 put("SLIDER0", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
@@ -149,10 +149,10 @@ public class App {
                 put("SLIDER2", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
                 put("LCOLOR", "^([A-Fa-f0-9]{6})$");
                 put("COLOR", "^([A-Fa-f0-9]{6})$");
-                put("MSG", "^[A-Za-z0-9_]+$");
+                put("MSG", "^.+$");
             }
         };
-        App.protocols.put("1", new Protocol(commandsMap, commandsRegex, " ", ":"));
+        App.protocols.put("1", new Protocol(commandsMap, commandsRegex, "(MSG:.*)|([^\\\\\\\\s]+)", ":"));
 
         commandsMap = new HashMap<>() {
             {
@@ -206,6 +206,7 @@ public class App {
                 put("5", "speed");
                 put("6", "lrgb_color");
                 put("7", "lcd");
+                put("8", "msg");
             }
         };
         App.protocols.put("8", new Protocol(commandsMap, commandsRegex, "", ""));
@@ -259,7 +260,7 @@ public class App {
                 StringBuilder body = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    System.out.println(line);
+                    // System.out.println(line);
                     body.append(line);
                 }
 
@@ -370,7 +371,6 @@ public class App {
                                 }
                             }
                         }
-
                     }
                 } else {
                     if (!msg.isEmpty()) { // clientMessages.containsKey(clientAddress) &&
@@ -387,28 +387,25 @@ public class App {
                         String data = mensaje.split("\\|")[1];
                         System.out.println("Data: " + data);
                         ArrayList<Command> commands = processPacket(protocol, App.protocols.get(protocol), data);
+                        System.out.println(commands.size());
                         // vdState.eraseTextArea();
                         for (Command command : commands) {
                             System.out.println("Command+: " + command.toString());
                             vdState.execute(command);
+                            System.out.println("Hi");
                         }
-                        // clientQueue.remove();
-                        // clientQueue.poll();
-                        // clientMessages.get(clientAddress).poll();
 
-                        response = vdState.buildVD();
-                        System.out.println("Response: " + response);
+                        
                         // vdPackets.add(response);
                     } else {
                         // Solo cambian componentes sin enviar o recibir
                         vdState = new VirtualDevice(response);
                     }
                 }
-
-                if (vdState.buildVD() != vdPackets.getLast()) {
-                    vdPackets.add(vdState.buildVD());
-                    response = vdState.buildVD();
-                    System.out.println("Response: " + response);
+                response = vdState.buildVD();
+                System.out.println("Response: " + response);
+                if (response != vdPackets.getLast()) {
+                    vdPackets.add(response);
                 }
 
                 exchange.sendResponseHeaders(200, response.length());
@@ -492,30 +489,36 @@ public class App {
 
         ArrayList<Command> commands = new ArrayList<>();
         if (protocolId.equals("1")) {
-            String[] commandsP = message.split(protocol.commandDelimiter);
+            String[] commandsP = separarTexto(message);
+            
             for (String command : commandsP) {
                 String[] parts = command.split(protocol.commandSeparator);
                 String component = App.protocols.get(protocolId).commandsMap.get(parts[0]);
                 System.out.println("Component: " + component);
                 System.out.println("Value: " + parts[1]);
                 String value = parts[1];
-                commands.add(new Command(component, "msg", value));
+                if( (App.protocols.get(protocolId).commandsMap.containsKey(parts[0]) && value.matches(App.protocols.get(protocolId).commandsRegex.get(parts[0])))){
+                    System.out.println("Elemento");
+                    commands.add(new Command(component, "msg", value));
+                }
             }
         } else if (protocolId.equals("2")) {
-
+            System.out.println("Mensaje Barrios: " + message);
+            int length = 0;
+            String command = "";
+            String value = "";
             while (message.length() > 0) {
-                int length = Integer.parseInt(message.substring(0, 1));
-                String command = message.substring(1, 2);
-                String value = "";
-                if (command.startsWith("E")) {
+                if(message.startsWith("EE")){
+                    length = message.length();
                     command = "EE";
-                    value = message.substring(2);
-                    System.out.println("Mensaje: " + value);
-                    length = 0;
-                } else {
+                    value = getMessage(message.substring(2));
+                }else{
+                    length = Integer.parseInt(message.substring(0, 1));
+                    command = message.substring(1, 2);
                     int commandLength = length - 2;
                     value = message.substring(2, 2 + commandLength);
                 }
+                
                 command = protocol.commandsMap.get(command);
                 commands.add(new Command(command, "msg", value));
                 message = message.substring(length);
@@ -528,5 +531,22 @@ public class App {
 
         return commands;
         // protocol|vd|message
+    }
+
+    public static String[] separarTexto(String input) {
+        List<String> partes = new ArrayList<>();
+
+        // Patrón: separa por espacios, pero captura todo lo que sigue después de "MSG:"
+        String regex = "(MSG:.*)|([^\\s]+)";
+        
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
+        java.util.regex.Matcher matcher = pattern.matcher(input);
+
+        while (matcher.find()) {
+            partes.add(matcher.group());
+        }
+
+        // Convertir la lista a un array y devolverlo
+        return partes.toArray(new String[0]);
     }
 }
