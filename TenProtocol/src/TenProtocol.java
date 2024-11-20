@@ -23,9 +23,15 @@ public class TenProtocol {
         // return header + "-" + data;
         for(Command command : commands){
             // String commandString = command.toString();
-            this.data += command.toString() + " ";
+            //this.data += command.toString() + " ";
+            this.data +=  command.component + ":" + command.value + " ";
+           // System.out.println("hh " +  command.value + " aa " + command.action + " cc " + command.component);
         }
+<<<<<<< HEAD
         this.data = this.data.trim();
+=======
+        this.data = this.data.substring(0, this.data.length()-1);
+>>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
         return this.header + "|" + this.data;
     }
 
@@ -70,40 +76,6 @@ public class TenProtocol {
             String component = token.split(":")[0];
             String value = token.split(":")[1];
             //Traducción de Protocolo
-            switch (component) {
-                case "lcd":
-                break;
-                case "switch0":
-                break;
-                case "switch1":
-                break;
-                case "fan":
-                break;
-                case "lrgb":
-                break;
-                case "lred":
-                break;
-                case "lgreen":
-                break;
-                case "heat":
-                break;
-                case "speed":
-                break;
-                case "slider0":
-                break;
-                case "slider1":
-                break;
-                case "slider2":
-                break;
-                case "lrgb_color":
-                break;
-                case "pick_color":
-                break;
-                case "msg":
-                break;
-                default:
-                //Comando desconocido
-                }                
         }
     }
 
@@ -121,7 +93,7 @@ public class TenProtocol {
         }
     }
 
-    //****************************************IMPORTANTE********************************************************* */
+    //*************IMPORTANTE******************** */
     // El ten protocol solamente sera la DATA que se envia en los paquetes, aparte son los headers que se agregan en el driver
 
     // Aquí es donde se interpretan los paquetes de los otros protocolos y se convierte en VD

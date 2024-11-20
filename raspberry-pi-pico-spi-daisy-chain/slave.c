@@ -44,7 +44,14 @@ void spiReceiveISR () {
   f->data = malloc(f->length);
   spi_read_blocking (spi0, 0, f->data, f->length);
 
+  uint8_t valid = header[0] + header[1] + header[2] + header[3];
+  if (valid == 0) {
+    if(f->to == 0x64) {
+      // uart_puts(UART_ID, f->data);
+      uart_write_blocking(UART_ID, f->data, f->length);
+    } else if(f->from == 0x64){
     
+<<<<<<< HEAD
       if(f->to == 0x64) {
         uart_puts(UART_ID, f->data);
        // uart_write_blocking(UART_ID, f->data, f->length);
@@ -55,6 +62,15 @@ void spiReceiveISR () {
       }
      
     
+=======
+    }else {
+      master_propagate(f);
+    }
+  } else {
+    // checksum ERROR
+  }
+          
+>>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
   free(f->data);
   free(f);
 }
