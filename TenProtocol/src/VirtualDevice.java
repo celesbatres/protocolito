@@ -51,6 +51,11 @@ public class VirtualDevice {
         String value = command.getValue();
 
         if(action.equals("msg")){
+            System.out.println(component);
+            if(component.equals("speed")){
+                System.out.println("Speed: " + value);
+                setSpeed(value);
+            }
             // Cambiar el valor del componente
             switch(component){
                 case "lcd":
@@ -69,6 +74,7 @@ public class VirtualDevice {
                     this.componentsMap.get("lrgb").setValue(value);
                     break;
                 case "lred":
+                    System.out.println("Lred: " + value);
                     this.componentsMap.get("lred").setValue(value);
                     break;
                 case "lgreen":
@@ -78,7 +84,8 @@ public class VirtualDevice {
                     this.componentsMap.get("heat").setValue(value);
                     break;
                 case "speed":
-                    this.componentsMap.get("speed").setValue(value);
+                    System.out.println("Speed: " + toHex(value));
+                    this.componentsMap.get("speed").setValue(toHex(value));
                     break;
                 case "slider0":
                     this.componentsMap.get("slider0").setValue(value);
@@ -169,6 +176,7 @@ public class VirtualDevice {
 
     // Devuelve el VD completo en dependencia de los atributos
     public String buildVD(){//Sin msg
+        // System.out.println("Speed22: " + this.componentsMap.get("speed").value);
         String vd = buildControl() + this.componentsMap.get("speed").value + this.componentsMap.get("space").value + this.componentsMap.get("slider0").value + this.componentsMap.get("slider1").value + this.componentsMap.get("slider2").value + this.componentsMap.get("space").value + this.componentsMap.get("lrgb_color").value + this.componentsMap.get("space").value + this.componentsMap.get("pick_color").value + this.componentsMap.get("msg").value;
         return vd;
     }

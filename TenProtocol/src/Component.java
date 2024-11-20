@@ -22,6 +22,7 @@ public class Component {
 
     public void setValue(String value){
         this.value = value;
+        System.out.println("Setting value: " + this.value);
     }
 
     public void setRol(String rol){

@@ -124,11 +124,11 @@ public class App {
                 put("LRED", "lred");
                 put("LGRE", "lgreen");
                 put("HEAT", "heat");
-                put("SPEED", "speed");
+                put("SPD", "speed");
                 put("SLIDER0", "slider0");
                 put("SLIDER1", "slider1");
                 put("SLIDER2", "slider2");
-                put("L_COLOR", "lrgb_color");
+                put("LCOLOR", "lrgb_color");
                 put("COLOR", "pick_color");
                 put("MSG", "msg");
             }
@@ -143,11 +143,11 @@ public class App {
                 put("LRED", "^[0-1]{1}$");
                 put("LGREEN", "^[0-1]{1}$");
                 put("HEAT", "^[0-1]{1}$");
-                put("SPEED", "^(1[0-5]|[0-9])$");
+                put("SPD", "^(1[0-5]|[0-9])$");
                 put("SLIDER0", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
                 put("SLIDER1", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
                 put("SLIDER2", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
-                put("L_COLOR", "^([A-Fa-f0-9]{6})$");
+                put("LCOLOR", "^([A-Fa-f0-9]{6})$");
                 put("COLOR", "^([A-Fa-f0-9]{6})$");
                 put("MSG", "^[A-Za-z0-9_]+$");
             }
@@ -231,7 +231,7 @@ public class App {
                 put("slider2", "^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$");
                 put("lrgb_color", "^([A-Fa-f0-9]{6})$");
                 put("pick_color", "^([A-Fa-f0-9]{6})$");
-                put("msg", "^[A-Za-z0-9_]+$");
+                put("msg", "^'.*'$");
             }
         };
 
@@ -295,7 +295,7 @@ public class App {
                     }
                     String[] commands = tokens.toArray(new String[0]);
                     for (int i = 0; i < commands.length; i++) {
-                        System.out.println("Comando: "+commands[i]);
+                        System.out.println("Comando: " + commands[i]);
                     }
                     String action = commands[0];
 
@@ -316,9 +316,11 @@ public class App {
                             if (commandsMap.containsKey(component)) {// Es un comando válido
                                 // Hacer comparaciones
                                 System.out.println("Command: " + commandsMap.get(component));
-                                if (value.matches(commandsMap.get(component))) {// Tiene un valor válido para asignarle
+                                System.out.println();
+                               // Tiene un valor válido para asignarle
+                                    System.out.println("Cumple");
                                     tp.commands.add(new Command(component, "msg", value));
-                                }
+                                
                             }
                         }
 
@@ -347,7 +349,7 @@ public class App {
                             if (tpPackets.isEmpty() || !packet.equals(tpPackets.getLast())) {
                                 tpPackets.add(packet);
                                 System.out.println("TenProtocol: " + packet);
-                                // sendToDriver(packet);
+                                sendToDriver(packet);
                             }
                         }
                     } else if (action.equals("cmd")) {
@@ -387,7 +389,7 @@ public class App {
                         ArrayList<Command> commands = processPacket(protocol, App.protocols.get(protocol), data);
                         // vdState.eraseTextArea();
                         for (Command command : commands) {
-                            System.out.println("Command: " + command.toString());
+                            System.out.println("Command+: " + command.toString());
                             vdState.execute(command);
                         }
                         // clientQueue.remove();
@@ -445,30 +447,30 @@ public class App {
         // Matcher matcher = pattern.matcher(input);
 
         // while (matcher.find()) {
-        //     tokens.add(matcher.group());
+        // tokens.add(matcher.group());
         // }
 
         // String[] parts = tokens.toArray(new String[0]);
 
         // for (String part : parts) {
-        //     System.out.println(part);
+        // System.out.println(part);
         // }
-        
+
         // // Debe tener al menos 2 elementos (cmd/msg y un componente:valor)
         // if (parts.length < 2) {
-        //     return false;
+        // return false;
         // }
 
         // if (!parts[0].equals("cmd") && !parts[0].equals("msg")) {
-        //     return false;
+        // return false;
         // }
 
         // // Verificar que todos los elementos después del primero tengan formato
         // // componente:valor
         // for (int i = 2; i < parts.length; i++) {
-        //     if (!parts[i].matches("[a-zA-Z0-9_]+:[a-zA-Z0-9_]+")) {
-        //         return false;
-        //     }
+        // if (!parts[i].matches("[a-zA-Z0-9_]+:[a-zA-Z0-9_]+")) {
+        // return false;
+        // }
         // }
 
         return true;
@@ -504,8 +506,16 @@ public class App {
             while (message.length() > 0) {
                 int length = Integer.parseInt(message.substring(0, 1));
                 String command = message.substring(1, 2);
-                int commandLength = length - 2;
-                String value = message.substring(2, 2 + commandLength);
+                String value = "";
+                if (command.startsWith("E")) {
+                    command = "EE";
+                    value = message.substring(2);
+                    System.out.println("Mensaje: " + value);
+                    length = 0;
+                } else {
+                    int commandLength = length - 2;
+                    value = message.substring(2, 2 + commandLength);
+                }
                 command = protocol.commandsMap.get(command);
                 commands.add(new Command(command, "msg", value));
                 message = message.substring(length);

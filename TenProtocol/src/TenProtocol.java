@@ -12,7 +12,6 @@ public class TenProtocol {
         this.data = "";
     }
 
-
     public TenProtocol(){
         this.data = "";
         this.header = "";
@@ -26,6 +25,7 @@ public class TenProtocol {
             // String commandString = command.toString();
             this.data += command.toString() + " ";
         }
+        this.data = this.data.trim();
         return this.header + "|" + this.data;
     }
 
