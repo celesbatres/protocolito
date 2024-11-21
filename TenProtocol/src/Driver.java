@@ -30,7 +30,7 @@ public class Driver {
     }
 
     public static void abrirPuerto() {
-        puertoUtilizar = SerialPort.getCommPort("COM5");
+        puertoUtilizar = SerialPort.getCommPort("COM6");
         puertoUtilizar.setComPortParameters(115200, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
         puertoUtilizar.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING, 0, 0);
 
@@ -51,7 +51,7 @@ public class Driver {
 
             while (true) {
                 String message = convertirMensajeUDP(udpSocket, receiveBuffer);
-                System.out.println("mensaje " + message);
+               // System.out.println("mensaje " + message);
                 if (message != null) {
                     //System.out.println("Datos de app a driver " + message);
                     sendToUART(message);
@@ -77,26 +77,32 @@ public class Driver {
         }
     }
 
-<<<<<<< HEAD
     //de lo que envio a uart
-=======
-    //de lo que envio
->>>>>>> 8618f057989b42df4cd8d35083d95591f71b3786
     public static void sendToUART(String message) {
         String[] datos_enviar = message.split("\\|");
         
         String grupo_enviar = datos_enviar[0];
+        System.out.println("grupo enviar " + grupo_enviar);
         String num_vd = datos_enviar[1];
         String data_enviar = datos_enviar[2];
         String nuevo_data = data_enviar + "\n";
         String final_enviar = "";
         int cant = data_enviar.length() + 1;
         String len = cant + "";
-        if(cant > 15){
-            final_enviar = "640" + grupo_enviar + "0" + num_vd + Integer.toHexString(cant);
+        if(grupo_enviar.equals("11")){
+            if(cant > 15){
+                final_enviar = "640B" + "0" + num_vd + Integer.toHexString(cant);
+            }else{
+                final_enviar = "640b" + "0" + num_vd + "0" + Integer.toHexString(cant);
+            }
         }else{
-            final_enviar = "640" + grupo_enviar + "0" + num_vd + "0" + Integer.toHexString(cant);
+            if(cant > 15){
+                final_enviar = "640" + grupo_enviar + "0" + num_vd + Integer.toHexString(cant);
+            }else{
+                final_enviar = "640" + grupo_enviar + "0" + num_vd + "0" + Integer.toHexString(cant);
+            }
         }
+       
 
         if (puertoUtilizar.isOpen()) {
             //puertoUtilizar.writeBytes(datos_enviar.getBytes(), datos_enviar.length());
@@ -107,7 +113,7 @@ public class Driver {
             //int hexValue = 0x64020106;
             
             //System.out.println("final " + final_enviar + " hex " + prueba);
-            //System.out.println(final_enviar);
+            System.out.println(final_enviar);
             int hexValue = 0;
             for(int i = 0; i < final_enviar.length(); i+=2){
                 int hexFor = Integer.parseInt("" + final_enviar.charAt(i) + final_enviar.charAt(i+1), 16);
@@ -119,12 +125,15 @@ public class Driver {
             header[1] = (byte) ((hexValue >> 16) & 0xFF); // obtiene los siguientes 8 bits
             header[2] = (byte) ((hexValue >> 8) & 0xFF);  // obtiene los siguientes 8 bits
             header[3] = (byte) (hexValue & 0xFF);        */ // obtiene los ultimos 8 bits
-            
+            if(header[3] == 10){
+                header[3] = 11;
+            }
+
             puertoUtilizar.writeBytes(header, header.length);
             puertoUtilizar.writeBytes(nuevo_data.getBytes(), Integer.parseInt(len));
 
             System.out.println("Se envio de Driver a física: " + header[0] + header[1] + header[2] + header[3]);
-            System.out.println("Se envio de Driver a física: " + nuevo_data + "j");
+            System.out.println("Se envio de Driver a física: " + nuevo_data);
         }else{
             System.err.println("Puerto no abierto");
         }
@@ -142,24 +151,19 @@ public class Driver {
                 //mensaje completo que se recibe del grupo 
                 String mensaje_recibido = recibirMensajeUART();
                 //substring del grupo para hacer un if y luego mandar todos los datos a metodo, que se forme el header y lo recibido 
+                System.out.println("mensaje recibido " + mensaje_recibido);
                 String no_grupo = mensaje_recibido.substring(0,2);
                 String no_vd = "";
                 int vd_temporal = 0;
                 String mensaje_e = "";
-                String mensaje_temp = "";
                 
                 String header_dapp = "";
-                System.out.println("grupo num " + no_grupo);
+                //System.out.println("grupo num " + no_grupo);
                 if(no_grupo.equals("01")){
                     no_vd = mensaje_recibido.substring(6, 8);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(12, mensaje_recibido.length());
-                    if(mensaje_recibido.contains("msg")){
-                        mensaje_temp = "'" + mensaje_e + "'";
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
-                    }else{
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-                    }
+                    header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                 //grupo 2
@@ -167,12 +171,7 @@ public class Driver {
                     no_vd = mensaje_recibido.substring(8, 10);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(16, mensaje_recibido.length());
-                    if(mensaje_recibido.contains("msg")){
-                        mensaje_temp = "'" + mensaje_e + "'";
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
-                    }else{
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-                    }
+                    header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                 //grupo 8
@@ -180,25 +179,19 @@ public class Driver {
                     no_vd = mensaje_recibido.substring(4, 6);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(10, mensaje_recibido.length());
-                    if(mensaje_recibido.contains("msg")){
-                        mensaje_temp = "'" + mensaje_e + "'";
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
-                    }else{
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-                    }
+                   // System.out.println("mensaje e anterior " + mensaje_e );
+                    mensaje_e = mensaje_e.substring(1,2) + mensaje_e.substring(3, 4);
+                   // System.out.println("mensaje e " + mensaje_e  + "s" + mensaje_e.length());
+                    header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                 //grupo 11
                 }else if(no_grupo.equals("11")){
+                    
                     no_vd = mensaje_recibido.substring(10, 12);
                     vd_temporal = Integer.parseInt(no_vd) - 1;
                     mensaje_e = mensaje_recibido.substring(16, mensaje_recibido.length());
-                    if(mensaje_recibido.contains("msg")){
-                        mensaje_temp = "'" + mensaje_e + "'";
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
-                    }else{
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-                    }
+                    header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                 }
@@ -207,12 +200,7 @@ public class Driver {
                     /*no_vd = mensaje_recibido.substring(10, 12);
                     vd_temporal = Integer.parseInt(no_vd) - 1;*/
                     mensaje_e = mensaje_recibido.substring(14, mensaje_recibido.length());
-                    if(mensaje_recibido.contains("msg")){
-                        mensaje_temp = "'" + mensaje_e + "'";
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_temp);
-                    }else{
-                        header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
-                    }
+                    header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                     //si no sirve este if de arriba, usa el header_dapp quemado de la siguiente linea.
                     //header_dapp = HeaderVirtualD(no_grupo, vd_temporal + "", mensaje_e);
                 }
@@ -239,6 +227,7 @@ public class Driver {
     private static String recibirMensajeUART() {
         String datos_recibidos = "";
         byte[] BufferUART = new byte[1024];
+        //System.out.println("BufferUART " + BufferUART.length);
         int bytesRead = 0;
         while (true) {
             bytesRead = puertoUtilizar.readBytes(BufferUART, BufferUART.length);
@@ -284,7 +273,7 @@ public class Driver {
         StringBuilder h2 = new StringBuilder();
         for(int i = 0; i < 8; i++){
             h2.append(String.format("%02X", mensajeRecibido[i]));
-            System.out.println("mensaje recibido posicion " + mensajeRecibido[i]);
+           // System.out.println("mensaje recibido posicion " + mensajeRecibido[i]);
         }
 
         String header_h2 = h2.toString();

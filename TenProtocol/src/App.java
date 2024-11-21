@@ -367,7 +367,15 @@ public class App {
                             if (tpPackets.isEmpty() || !packet.equals(tpPackets.getLast())) {
                                 tpPackets.add(packet);
                                 System.out.println("TenProtocol: " + packet);
-                                sendToDriver(packet);
+                                if(direction.equals("100")){
+                                    for (Command command : tp.commands) {
+                                        System.out.println("Command+: " + command.toString());
+                                        vdState.execute(command);
+                                        response=vdState.buildVD();
+                                    }
+                                }else{
+                                    sendToDriver(packet);
+                                }
                             }
                         }
                     } else if (action.equals("cmd")) {
@@ -515,6 +523,10 @@ public class App {
                 String value = parts[1];
                 if (component.equals("speed")) {
                     value = decimalToHex(value);
+                }else if(component.equals("slider1") || component.equals("slider2") || component.equals("slider0")){
+                    System.out.println("value " + value);
+                    value = toTargetLength(decimalToHex(value), 2);
+                    System.out.println("value2 " + value);
                 }
                 if ((App.protocols.get(protocolId).commandsMap.containsKey(parts[0])
                         && value.matches(App.protocols.get(protocolId).commandsRegex.get(parts[0])))) {
@@ -611,5 +623,12 @@ public class App {
             // Manejo de errores en caso de formato inválido
             throw new IllegalArgumentException("El input no es un número decimal válido: " + decimalString);
         }
+    }
+
+    public static String toTargetLength(String input, int targetLength) {
+        while(input.length() < targetLength){
+            input = "0" + input;
+        }
+        return input;
     }
 }
